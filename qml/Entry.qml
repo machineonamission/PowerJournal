@@ -11,14 +11,13 @@ Rectangle {
     color: "#f0f0f0"
     radius: 8
     width: parent.width - 2 * parent.padding
-    height: contentColumn.implicitHeight + 2 * padding
+    height: contentColumn.implicitHeight
 
     Column {
         id: contentColumn
-        x: card.padding
-        y: card.padding
-        width: parent.width - 2 * card.padding
-        spacing: 6
+        width: parent.width
+        padding: 5
+        spacing: 5
         Label {
             text: "This is an entry. it could contain text"
             wrapMode: Text.WordWrap
