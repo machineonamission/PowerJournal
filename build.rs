@@ -11,7 +11,7 @@ fn main() {
         .qml_module(QmlModule {
             uri: "me.machineonamission.powerjournal",
             rust_files: &["src/cxxqt_object.rs"],
-            qml_files: &["qml/main.qml"],
+            qml_files: &["qml/main.qml", "qml/Entry.qml", "qml/Entries.qml"],
             ..Default::default()
         })
         .build();
