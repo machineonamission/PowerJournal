@@ -1,4 +1,5 @@
 pub mod cxxqt_object;
+mod database;
 
 use cxx_qt_lib::{QGuiApplication, QQmlApplicationEngine, QUrl};
 fn main() {

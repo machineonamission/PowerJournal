@@ -8,6 +8,9 @@ edition = "2024"
 cxx = "1.0.95"
 cxx-qt = "0.7"
 cxx-qt-lib = { version = "0.7", features = ["qt_full"] }
+directories = "6.0.0"
+rusqlite = "0.37.0"
+anyhow = "1.0.100"
 
 [build-dependencies]
 # The link_qt_object_files feature is required for statically linking Qt 6.
