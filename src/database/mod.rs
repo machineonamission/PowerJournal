@@ -18,12 +18,10 @@ fn database_file() -> Result<PathBuf> {
     Ok(dir.join(FILENAME))
 }
 
-fn connect() -> Result<Connection> {
+pub fn connect() -> Result<Connection> {
     let path = database_file()?;
+    println!("Database path: {:?}", path);
     let conn = Connection::open(path)?;
-    // PWRJRNL in phone keys
-    conn.pragma_update(None, "application_id", 7975765)?;
-    // increment with each version, todo handle changes
-    conn.pragma_update(None, "user_version", 0)?;
+
     Ok(conn)
 }

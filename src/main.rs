@@ -1,4 +1,5 @@
 pub mod cxxqt_object;
+
 mod database;
 mod path;
 
@@ -7,8 +8,8 @@ fn main() {
     // Create the application and engine
     let mut app = QGuiApplication::new();
     let mut engine = QQmlApplicationEngine::new();
-    
-
+    // println!("{:}", path::path());
+    let mut db = database::connect();
     // Load the QML path into the engine
     if let Some(engine) = engine.as_mut() {
         engine.load(&QUrl::from("qrc:/qt/qml/me/machineonamission/powerjournal/qml/main.qml"));
