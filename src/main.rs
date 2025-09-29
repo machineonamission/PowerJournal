@@ -1,11 +1,13 @@
 pub mod cxxqt_object;
 mod database;
+mod path;
 
 use cxx_qt_lib::{QGuiApplication, QQmlApplicationEngine, QUrl};
 fn main() {
     // Create the application and engine
     let mut app = QGuiApplication::new();
     let mut engine = QQmlApplicationEngine::new();
+    
 
     // Load the QML path into the engine
     if let Some(engine) = engine.as_mut() {
