@@ -11,12 +11,12 @@ fn main() {
         .qt_module("Network")
         .qml_module(QmlModule {
             uri: "me.machineonamission.powerjournal",
-            rust_files: &["src/cxxqt_object.rs"],
+            rust_files: &["src/cxxqt_object.rs", "src/path.rs"],
             qml_files: &["qml/main.qml", "qml/Entry.qml", "qml/Entries.qml"],
             ..Default::default()
         })
         .cc_builder(|cc| {
-            cc.file("src/path.cpp").include("include");
+            cc.file("src/path.cpp").include("include/");
         })
         .build();
 }
