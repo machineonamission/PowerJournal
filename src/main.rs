@@ -8,7 +8,7 @@ fn main() {
     // Create the application and engine
     let mut app = QGuiApplication::new();
     let mut engine = QQmlApplicationEngine::new();
-    // println!("{:}", path::path());
+    println!("{:}", path::path());
     let mut db = database::connect();
     // Load the QML path into the engine
     if let Some(engine) = engine.as_mut() {
