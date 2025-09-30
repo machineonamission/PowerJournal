@@ -9,13 +9,7 @@ use rusqlite::ffi::sqlite3;
 static FILENAME: &str = "data.powerjournal";
 
 fn database_file() -> Result<PathBuf> {
-    let binding = match ProjectDirs::from("me", "machineonamission", "powerjournal") {
-        Some(dirs) => dirs,
-        None => return Err(anyhow::anyhow!("Could not find data directory")),
-    };
-    let dir = binding.data_dir();
-    fs::create_dir_all(dir)?;
-    Ok(dir.join(FILENAME))
+    Ok(crate::path::data_dir()?.join(FILENAME))
 }
 
 pub fn connect() -> Result<Connection> {

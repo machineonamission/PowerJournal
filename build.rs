@@ -16,7 +16,8 @@ fn main() {
             ..Default::default()
         })
         .cc_builder(|cc| {
-            cc.file("src/path.cpp").include("include/");
+            cc.file("src/cpp/path.cpp")
+                .include("src/cpp");
         })
         .build();
 }
