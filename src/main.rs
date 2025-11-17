@@ -1,36 +1,22 @@
-pub mod cxxqt_object;
+// Prevent console window in addition to Slint window in Windows release builds when, e.g., starting the app via file manager. Ignored on other platforms.
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-mod database;
-mod path;
-mod models;
+use std::error::Error;
 
-use cxx_qt_lib::{QGuiApplication, QQmlApplicationEngine, QUrl};
-use rusqlite::Connection;
-use std::sync::{Mutex, OnceLock};
+slint::include_modules!();
 
+fn main() -> Result<(), Box<dyn Error>> {
+    let ui = AppWindow::new()?;
 
-fn main() {
-    // Create the application and engine
-    let mut app = QGuiApplication::new();
-    let mut engine = QQmlApplicationEngine::new();
-    let db = database::get_db();
-    // Load the QML path into the engine
-    if let Some(engine) = engine.as_mut() {
-        engine.load(&QUrl::from("qrc:/qt/qml/me/machineonamission/powerjournal/qml/main.qml"));
-    }
+    ui.on_request_increase_value({
+        let ui_handle = ui.as_weak();
+        move || {
+            let ui = ui_handle.unwrap();
+            ui.set_counter(ui.get_counter() + 1);
+        }
+    });
 
-    if let Some(engine) = engine.as_mut() {
-        // Listen to a signal from the QML Engine
-        engine
-            .as_qqmlengine()
-            .on_quit(|_| {
-                println!("QML Quit!");
-            })
-            .release();
-    }
+    ui.run()?;
 
-    // Start the app
-    if let Some(app) = app.as_mut() {
-        app.exec();
-    }
+    Ok(())
 }

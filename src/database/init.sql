@@ -52,9 +52,9 @@ create table piece_1_mood
         constraint fk
             references piece
             on delete cascade,
-    -- integers are (supposed to be) 16-bit: -32768 to 32767
-    pleasantness INTEGER not null,
-    energy       INTEGER
+    -- integers are fucky, and 30 bits per entry doesnt matter. f64: -1 to 1, just like apple
+    pleasantness REAL not null,
+    energy       REAL
 );
 
 -- large unparsable file: image, audio, video
