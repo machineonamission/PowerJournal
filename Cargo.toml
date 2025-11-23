@@ -7,7 +7,7 @@ edition = "2024"
 directories = "6.0.0"
 rusqlite = { version = "0.37", features = ["bundled"] }
 anyhow = "1.0.100"
-slint = {version= "1.14.1", features = ["backend-android-activity-06", "renderer-skia", "backend-winit"]  }
+slint = { version = "1.14.1", features = ["backend-android-activity-06", "renderer-skia", "backend-winit"] }
 
 [build-dependencies]
 slint-build = "1.14.1"
