@@ -10,12 +10,10 @@ pub struct Model {
     #[sea_orm(
         primary_key,
         auto_increment = false,
-        ignore,
-        column_type = "custom(\"string\")",
-        select_as = "text"
+        column_type = "Text",
     )]
     pub key: String,
-    #[sea_orm(ignore, column_type = "custom(\"ANY\")", select_as = "text", nullable)]
+    #[sea_orm(ignore, column_type = "Text", nullable)]
     pub value: Option<String>,
 }
 

@@ -1,55 +1,50 @@
-// use anyhow::Result;
-// use rusqlite::Connection;
-// use std::path::PathBuf;
-// use std::sync::{Mutex, OnceLock};
-//
-static FILENAME: &str = "sqlite://data.powerjournal";
-
-fn database_file() -> Result<PathBuf> {
-    Ok(crate::path::data_dir()?.join(FILENAME))
-}
-//
-// fn init(conn: &Connection) -> Result<()> {
-//     println!("Initializing database");
-//     conn.execute_batch(include_str!("init.sql"))?;
-//     Ok(())
-// }
-// pub fn connect() -> Result<Connection> {
-//     let path = database_file()?;
-//     println!("Database path: {:?}", path);
-//     let exists = path.try_exists()?;
-//     let conn = Connection::open(path)?;
-//     if !exists {
-//         init(&conn)?;
-//     }
-//     Ok(conn)
-// }
-//
-static DB: OnceLock<Mutex<Result<DatabaseConnection>>> = OnceLock::new();
-
-pub fn get_db() -> &'static Mutex<Result<Connection>> {
-    DB.get_or_init(|| Mutex::new(init_db()))
-}
-
 pub mod entity;
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 
-// static DATABASE: OnceCell<DatabaseConnection> = OnceCell::const_new();
-
-use migration::{Migrator, MigratorTrait};
 use sea_orm::{Database, DatabaseConnection};
+#[cfg(not(target_arch = "wasm32"))]
+use std::{fs, path::PathBuf};
 
+/// The struct we will provide to Dioxus via use_context_provider
+#[derive(Clone, Debug)]
+pub struct DbContext {
+    pub conn: DatabaseConnection,
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+fn get_db_url() -> Result<String> {
+    let mut path: PathBuf = dirs::data_local_dir().ok_or(anyhow!("No data local dir"))?;
+    path.push("PowerJournal");
+    fs::create_dir_all(&path)?;
+    path.push("journal.powerjournal");
+
+    Ok(format!("sqlite://{}?mode=rwc", path.to_string_lossy()))
+}
+
+#[cfg(target_arch = "wasm32")]
+fn get_db_url() -> Result<String> {
+    Ok("sqlite::memory:".to_string())
+}
+
+/// Initializes the connection. You can call this from use_resource in your UI.
 pub async fn init_db() -> Result<DatabaseConnection> {
-    let db = Database::connect(database_file()?).await?;
+    let db_url = get_db_url()?;
 
-    // synchronizes database schema with entity definitions
+    dbg!(&db_url);
+
+
+    let db = Database::connect(&db_url)
+        .await?;
+
     db.get_schema_registry(&format!("{}::entity", module_path!()))
         .sync(&db)
         .await?;
 
-    // runs migrations (db stuff i cant do in seaorm)
-    // Migrator::up(&db, None).await?;
+    // Example schema sync:
+    // db.get_schema_registry(&format!("{}::entity", module_path!()))
+    //     .sync(&db)
+    //     .await
+    //     .expect("Failed to sync schema");
 
-    // DATABASE.set(db)?;
     Ok(db)
 }

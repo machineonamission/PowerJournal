@@ -8,10 +8,12 @@ use views::{Blog, Home, Navbar};
 mod components;
 /// Define a views module that contains the UI for all Layouts and Routes for our app.
 mod views;
+mod database;
+mod importers;
 
 /// The Route enum is used to define the structure of internal routes in our app. All route enums need to derive
 /// the [`Routable`] trait, which provides the necessary methods for the router to work.
-/// 
+///
 /// Each variant represents a different URL pattern that can be matched by the router. If that pattern is matched,
 /// the components for that route will be rendered.
 #[derive(Debug, Clone, Routable, PartialEq)]
@@ -51,6 +53,8 @@ fn main() {
 /// Components should be annotated with `#[component]` to support props, better error messages, and autocomplete
 #[component]
 fn App() -> Element {
+    dioxus_core::spawn_forever(importers::daylio::main());
+    
     // The `rsx!` macro lets us define HTML inside of rust. It expands to an Element with all of our HTML inside.
     rsx! {
         // In addition to element and text (which we will see later), rsx can contain other components. In this case,

@@ -7,9 +7,16 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-dioxus = { version = "0.7.1", features = ["router", "fullstack"] }
-sea-orm = { version = "2.0.0-rc", features = ["sqlx-sqlite", "runtime-tokio-native-tls", "macros",
+anyhow = { version = "1.0.104", features = ["std", "backtrace"] }
+dioxus = { version = "0.8.0-alpha", features = ["router", "fullstack"] }
+sea-orm = { version = "2.0.0", features = ["sqlx-sqlite", "runtime-tokio-native-tls", "macros",
     "with-chrono", "with-json", "schema-sync", "entity-registry"]}
+zip = "8.6.0"
+dirs = "6.0.0"
+base64 = "0.23.0"
+serde_json = "1.0.151"
+serde = { version = "1.0.229", features = ["derive"] }
+chrono = "0.4.45"
 
 [features]
 default = ["desktop"]
