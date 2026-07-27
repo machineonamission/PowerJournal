@@ -20,6 +20,7 @@ use glam::DVec3;
 
 /// THIS FUNCTION WAS WRITTEN BY GEMINI
 pub fn calculate_mood_valence(point: (f64, f64, f64)) -> f64 {
+    // see https://github.com/machineonamission/applejournalmoodcolors
     let p = DVec3::from(point);
 
     let gvertices = [
