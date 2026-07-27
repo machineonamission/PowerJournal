@@ -11,6 +11,7 @@ pub struct Model {
     pub id: i64,
     pub entry_id: i64,
     // -- 0 = text, 1 = mood, 2 = blob, 3 = location, 4 = activities
+    pub piece_type: i64,
     #[sea_orm(
         belongs_to,
         from = "entry_id",

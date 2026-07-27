@@ -9,3 +9,4 @@ pub use super::piece_2_blob;
 pub use super::piece_3_location;
 pub use super::piece_4_activities;
 pub use super::settings;
+pub use super::journal;

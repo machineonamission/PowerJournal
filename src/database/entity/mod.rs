@@ -11,3 +11,4 @@ pub mod piece_2_blob;
 pub mod piece_3_location;
 pub mod piece_4_activities;
 pub mod settings;
+pub mod journal;

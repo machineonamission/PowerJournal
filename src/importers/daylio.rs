@@ -90,6 +90,8 @@ pub async fn import_daylio<R: Read + Seek + Debug>(file: R) -> Result<()> {
     let db = init_db().await?;
     let txn = db.begin().await?;
 
+    let mut import_journal = journal::ActiveModel::builder().set_title("Daylio Import");
+
     println!("mapping daylio IDs");
 
     // map FROM daylio IDs TO powerjournal IDs
@@ -161,9 +163,9 @@ pub async fn import_daylio<R: Read + Seek + Debug>(file: R) -> Result<()> {
                             .get(&entry.mood)
                             .context("couldnt get valence for mood")?,
                     ),
-                ),
+                ).set_piece_type(1),
             );
-        
+
         // add text piece if note has text
         if let Some(note) = entry.note {
             master_entry = master_entry.add_piece(
@@ -171,10 +173,10 @@ pub async fn import_daylio<R: Read + Seek + Debug>(file: R) -> Result<()> {
                     piece_0_text::ActiveModel::builder()
                         .set_title(entry.note_title.clone())
                         .set_content(note),
-                ),
+                ).set_piece_type(0),
             );
         }
-        
+
         // add activities if note has them
         if !entry.tags.is_empty() {
             let mut activity_piece = piece::ActiveModel::builder();
@@ -183,11 +185,11 @@ pub async fn import_daylio<R: Read + Seek + Debug>(file: R) -> Result<()> {
                     piece_4_activities::ActiveModel::builder()
                         .set_activity_id(tag_map.get(&tag).cloned().context("epic tag failure")?)
                         .set_value(1),
-                )
+                ).set_piece_type(4)
             }
             master_entry = master_entry.add_piece(activity_piece);
         }
-        
+
         // add assets if note has them
         if !entry.assets.is_empty() {
             for asset_id in entry.assets {
@@ -206,14 +208,16 @@ pub async fn import_daylio<R: Read + Seek + Debug>(file: R) -> Result<()> {
                         piece_2_blob::ActiveModel::builder()
                             .set_data(buf)
                             .set_blob_type(0), // assume they're all images for now
-                    ),
+                    ).set_piece_type(2),
                 )
             }
         }
         // we've prepped all the pieces, commit to transaction
-        master_entry.insert(&txn).await?;
+        import_journal = import_journal.add_entry(master_entry);
     }
-    
+
+    import_journal.insert(&txn).await?;
+
     // importing done, commit transaction (all is rolled back if errors before we get here)
     txn.commit().await?;
     println!("finished!");

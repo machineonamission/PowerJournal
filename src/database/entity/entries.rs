@@ -14,6 +14,15 @@ pub struct Model {
     pub title: Option<String>,
     #[sea_orm(has_many)]
     pub pieces: HasMany<super::piece::Entity>,
+    pub journal_id: i64,
+    #[sea_orm(
+        belongs_to,
+        from = "journal_id",
+        to = "id",
+        on_update = "NoAction",
+        on_delete = "Cascade"
+    )]
+    pub journal: HasOne<super::journal::Entity>,
 }
 
 impl ActiveModelBehavior for ActiveModel {}
