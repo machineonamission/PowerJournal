@@ -26,7 +26,7 @@ create table piece
             references entries
             on delete cascade,
     -- 0 = text, 1 = mood, 2 = blob, 3 = location, 4 = activities
-    type     integer not null
+    blob_type     integer not null
 );
 
 -- simple block of text

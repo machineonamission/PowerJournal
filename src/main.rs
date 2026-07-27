@@ -53,7 +53,7 @@ fn main() {
 /// Components should be annotated with `#[component]` to support props, better error messages, and autocomplete
 #[component]
 fn App() -> Element {
-    dioxus_core::spawn_forever(importers::daylio::main());
+    dioxus_core::spawn_forever(importers::applejournal::main());
     
     // The `rsx!` macro lets us define HTML inside of rust. It expands to an Element with all of our HTML inside.
     rsx! {

@@ -1,0 +1,43 @@
+erDiagram
+    ENTRIES {
+        int datetime
+        text title
+    }
+    PIECE {
+        int type
+    }
+    PIECE_0_TEXT {
+        text title
+        text content
+    }
+    PIECE_1_MOOD {
+        float pleasantness
+        float energy
+    }
+    PIECE_2_BLOB {
+        int type
+        blob data
+    }
+    PIECE_3_LOCATION {
+        float lat
+        float long
+    }
+    PIECE_4_ACTIVITIES {
+        int value
+    }
+    ACTIVITIES {
+        text name
+        text emoji
+    }
+    SETTINGS {
+        string key
+        any value
+    }
+    ENTRIES ||--o{ PIECE : has
+    PIECE ||--|| O : polymorphic
+    O ||--|| PIECE_0_TEXT : is
+    O ||--|| PIECE_1_MOOD : is
+    O ||--|| PIECE_2_BLOB : is
+    O ||--|| PIECE_3_LOCATION : is
+    O ||--|{ PIECE_4_ACTIVITIES : "represents activity entries"
+    ACTIVITIES ||--|{ PIECE_4_ACTIVITIES : "is this activity"

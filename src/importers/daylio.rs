@@ -62,30 +62,12 @@ fn ms_to_datetime(ms: i64) -> Result<chrono::DateTime<Utc>> {
     chrono::DateTime::from_timestamp_millis(ms).context("epic datetime fail")
 }
 
-///
-///
-/// # Arguments
-///
-/// * `file`: file-like object that is a .daylio BACKUP.
-/// More > Backup & Restore > Advanced Options > Export
-///
-/// returns: ()
-///
-/// # Examples
-///
-/// ```
-///
-/// ```
 pub async fn import_daylio<R: Read + Seek + Debug>(file: R) -> Result<()> {
+    /// * `file`: file-like object that is a .daylio BACKUP.
+    /// More > Backup & Restore > Advanced Options > Export
     println!("beginning import");
     // parse zip
     let mut masterzip = ZipArchive::new(file)?;
-    // {
-    //     for name in masterzip.file_names() {
-    //         dbg!(name);
-    //     }
-    // }
-
     let mut buf: String = String::new();
     {
         // grab main file
@@ -105,9 +87,7 @@ pub async fn import_daylio<R: Read + Seek + Debug>(file: R) -> Result<()> {
     // dbg!(json);
     // init db
     println!("file decoded, initing db");
-
     let db = init_db().await?;
-
     let txn = db.begin().await?;
 
     println!("mapping daylio IDs");
@@ -137,19 +117,25 @@ pub async fn import_daylio<R: Read + Seek + Debug>(file: R) -> Result<()> {
     // value is zip index
     let mut checksum_to_zip_index_map: HashMap<String, usize> = HashMap::new();
 
+    // iterate over every file in the zip file
     for i in 0..masterzip.len() {
         let mut file = masterzip.by_index(i)?;
+        // get path
         let buf = file.enclosed_name().context("zip enclosed name error")?;
+        // get just filename
         let name = buf.file_name().context("file name error")?;
+        // convert &OsStr to String
         let strname = name
             .to_os_string()
             .into_string()
             .map_err(|_| anyhow!("osstring to string fail"))?;
+        // save to lookup hashmap
         checksum_to_zip_index_map.insert(strname, i);
     }
 
     // key is daylio asset id
     // value is ZIP INDEX
+    // so now we can go straight from daylio's internal ID to the zip index, which we can get the blob data from
     let mut asset_id_to_zip: HashMap<i32, usize> = HashMap::new();
     for asset in json.assets {
         asset_id_to_zip.insert(
@@ -161,11 +147,13 @@ pub async fn import_daylio<R: Read + Seek + Debug>(file: R) -> Result<()> {
         );
     }
 
+    // main entry loop
     for entry in json.day_entries {
         println!("entry {}", entry.id);
         let mut master_entry = entries::ActiveModel::builder()
             .set_datetime(entry.datetime / 1000) // daylio does ms, i do s like a NORMAL PERSON
             .set_title(entry.note_title.clone())
+            // all daylio entries have moods, thats how the fucking app works
             .add_piece(
                 piece::ActiveModel::builder().set_piece_1_mood(
                     piece_1_mood::ActiveModel::builder().set_pleasantness(
@@ -175,7 +163,8 @@ pub async fn import_daylio<R: Read + Seek + Debug>(file: R) -> Result<()> {
                     ),
                 ),
             );
-
+        
+        // add text piece if note has text
         if let Some(note) = entry.note {
             master_entry = master_entry.add_piece(
                 piece::ActiveModel::builder().set_piece_0_text(
@@ -185,7 +174,8 @@ pub async fn import_daylio<R: Read + Seek + Debug>(file: R) -> Result<()> {
                 ),
             );
         }
-
+        
+        // add activities if note has them
         if !entry.tags.is_empty() {
             let mut activity_piece = piece::ActiveModel::builder();
             for tag in entry.tags {
@@ -197,51 +187,34 @@ pub async fn import_daylio<R: Read + Seek + Debug>(file: R) -> Result<()> {
             }
             master_entry = master_entry.add_piece(activity_piece);
         }
-
+        
+        // add assets if note has them
         if !entry.assets.is_empty() {
             for asset_id in entry.assets {
+                // lookup place in zip of this asset (by precomputed checksum map)
                 let asset = asset_id_to_zip
                     .get(&asset_id)
                     .cloned()
                     .context("asset reference error")?;
+                // get data
                 let mut file_in_zip = masterzip.by_index(asset)?;
                 let mut buf: Vec<u8> = Vec::new();
                 file_in_zip.read_to_end(&mut buf)?;
-
+                // add piece with blob
                 master_entry = master_entry.add_piece(
                     piece::ActiveModel::builder().set_piece_2_blob(
                         piece_2_blob::ActiveModel::builder()
                             .set_data(buf)
-                            .set_type(0), // assume they're all images for now
+                            .set_blob_type(0), // assume they're all images for now
                     ),
                 )
             }
         }
-
+        // we've prepped all the pieces, commit to transaction
         master_entry.insert(&txn).await?;
     }
-
-    // // daylio to pj id
-    // let mut asset_map: HashMap<i32, i32> = HashMap::new();
-    // // TODO: this shit brokey cause you cant insert assets without a fucking entry. need to change the order i do this
-    // for asset in json.assets {
-    //     let checksum = asset.checksum;
-    //     let asset_dt = chrono::DateTime::from_timestamp_millis(asset.created_at).ok_or(anyhow!("epic fail"))?;
-    //     let year = asset_dt.year();
-    //     let month = asset_dt.month();
-    //     dbg!(&checksum);
-    //     let mut file_in_zip = masterzip.by_name(&format!("/assets/photos/{year}/{month}/{checksum}"))?;
-    //     let mut buf: Vec<u8> = Vec::new();
-    //     file_in_zip.read_to_end(&mut buf)?;
-    //     let model = database::entity::piece_2_blob::ActiveModel {
-    //         r#type: Set(0),
-    //         data: Set(buf),
-    //         ..Default::default()
-    //     }
-    //         .insert(&db)
-    //         .await?;
-    //     asset_map.insert(asset.id, model.id as i32);
-    // }
+    
+    // importing done, commit transaction (all is rolled back if errors before we get here)
     txn.commit().await?;
     println!("finished!");
     Ok(())

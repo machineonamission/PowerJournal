@@ -10,7 +10,7 @@ pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
     pub id: i64,
     // 0 = image, 1 = audio, 2 = video
-    pub r#type: i64,
+    pub blob_type: i64,
     #[sea_orm(column_type = "Blob")]
     pub data: Vec<u8>,
     #[sea_orm(
