@@ -41,7 +41,7 @@ struct LocationSidecar {
 pub fn calculate_mood_valence(point: (f64, f64, f64)) -> f64 {
     // see https://github.com/machineonamission/applejournalmoodcolors
     let p = DVec3::from(point);
-
+    // these represent a piecewise RGB gradient that is my best reconstruction of what the export uses internally
     let gvertices = [
         DVec3::new(254.96, 238.04, 230.99),
         DVec3::new(248.67, 219.51, 177.07),
@@ -52,8 +52,13 @@ pub fn calculate_mood_valence(point: (f64, f64, f64)) -> f64 {
         DVec3::new(217.02, 209.98, 243.02),
     ];
 
+    // the mood valence each vertex represents
     let valences = [1.0, 2.0 / 3.0, 1.0 / 3.0, 0.0, -1.0 / 3.0, -2.0 / 3.0, -1.0];
 
+    // so basically, apple journal somewhere has a function that, using a piecewise gradient, turns a valence value -1 to 1 into an RGB color.
+    // my function is essentially the INVERSE of that, reconstructing the color from the value
+    // the task of this code is to map `point` to somewhere along the gradient, and then compute the input valence that would have resulted in that color
+    // this is the best way to reconstruct a valence value from a normal journal export since we aren't given the raw valence value directly.
     gvertices
         .windows(2) // Iterate over adjacent pairs of points (segments)
         .zip(valences.windows(2)) // Pair them with their corresponding valences
@@ -185,10 +190,13 @@ pub async fn import_apple_journal<R: Read + Seek + Debug>(file: R) -> Result<()>
         let body = document.select(&body_s).next();
         if let Some(body) = body {
             let body_contents = body.html();
-            master_entry =
-                master_entry.add_piece(piece::ActiveModel::builder().set_piece_0_text(
-                    piece_0_text::ActiveModel::builder().set_content(body_contents),
-                ).set_piece_type(0));
+            master_entry = master_entry.add_piece(
+                piece::ActiveModel::builder()
+                    .set_piece_0_text(
+                        piece_0_text::ActiveModel::builder().set_content(body_contents),
+                    )
+                    .set_piece_type(0),
+            );
         } else {
             println!("no body found");
         }
@@ -228,14 +236,16 @@ pub async fn import_apple_journal<R: Read + Seek + Debug>(file: R) -> Result<()>
             }
             // add piece with blob
             master_entry = master_entry.add_piece(
-                piece::ActiveModel::builder().set_piece_2_blob(
-                    piece_2_blob::ActiveModel::builder()
-                        .set_data(buf)
-                        .set_blob_type(0), // assume they're all images for now
-                ).set_piece_type(2),
+                piece::ActiveModel::builder()
+                    .set_piece_2_blob(
+                        piece_2_blob::ActiveModel::builder()
+                            .set_data(buf)
+                            .set_blob_type(0), // assume they're all images for now
+                    )
+                    .set_piece_type(2),
             )
         }
-        
+
         // mood/"state of mind"
         for element in grid.select(&som_s) {
             // the best mood data we have is the css background color so uh
@@ -264,10 +274,12 @@ pub async fn import_apple_journal<R: Read + Seek + Debug>(file: R) -> Result<()>
                                 dbg!(&rgba, &valence);
                                 // add to entry
                                 master_entry = master_entry.add_piece(
-                                    piece::ActiveModel::builder().set_piece_1_mood(
-                                        piece_1_mood::ActiveModel::builder()
-                                            .set_pleasantness(valence),
-                                    ).set_piece_type(1),
+                                    piece::ActiveModel::builder()
+                                        .set_piece_1_mood(
+                                            piece_1_mood::ActiveModel::builder()
+                                                .set_pleasantness(valence),
+                                        )
+                                        .set_piece_type(1),
                                 );
                             }
                         }
@@ -275,7 +287,7 @@ pub async fn import_apple_journal<R: Read + Seek + Debug>(file: R) -> Result<()>
                 }
             }
         }
-        
+
         // locations
         for element in grid.select(&location_s) {
             // grab its ID, there's a corresponding .json file with the actual data in it!
@@ -290,15 +302,16 @@ pub async fn import_apple_journal<R: Read + Seek + Debug>(file: R) -> Result<()>
             let json: LocationSidecar = serde_json::from_str(&*buf)?;
             for visit in json.visits {
                 master_entry = master_entry.add_piece(
-                    piece::ActiveModel::builder().set_piece_3_location(
-                        piece_3_location::ActiveModel::builder()
-                            .set_lat(visit.latitude)
-                            .set_lon(visit.longitude)
-                            .set_name(visit.place_name)
-                    ).set_piece_type(3),
+                    piece::ActiveModel::builder()
+                        .set_piece_3_location(
+                            piece_3_location::ActiveModel::builder()
+                                .set_lat(visit.latitude)
+                                .set_lon(visit.longitude)
+                                .set_name(visit.place_name),
+                        )
+                        .set_piece_type(3),
                 );
             }
-
         }
         // master_entry.insert(&txn).await?;
         import_journal = import_journal.add_entry(master_entry);
