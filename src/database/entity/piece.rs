@@ -27,6 +27,8 @@ pub struct Model {
     pub piece_2_blob: HasOne<super::piece_2_blob::Entity>,
     #[sea_orm(has_one)]
     pub piece_3_location: HasOne<super::piece_3_location::Entity>,
+    #[sea_orm(has_many)]
+    pub piece_4_activity: HasMany<super::piece_4_activities::Entity>,
     #[sea_orm(has_many, via = "piece_4_activities")]
     pub activities: HasMany<super::activities::Entity>,
 }
