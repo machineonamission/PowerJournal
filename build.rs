@@ -12,7 +12,7 @@ fn main() {
             "src/tailwindinput.css",
             "-o",
             "assets/tailwind.css",
-            "--minify",
+            // "--minify",
         ])
         .env("NODE_ENV", "production")
         .spawn()

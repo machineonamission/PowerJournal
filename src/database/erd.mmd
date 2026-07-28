@@ -1,4 +1,7 @@
 erDiagram
+    JOURNAL {
+        text name
+    }
     ENTRIES {
         int datetime
         text title
@@ -33,6 +36,12 @@ erDiagram
         string key
         any value
     }
+    O {
+        mermaid markdown
+        doesnt support
+        sql polymorphism
+    }
+    JOURNAL ||--o{ ENTRIES : has
     ENTRIES ||--o{ PIECE : has
     PIECE ||--|| O : polymorphic
     O ||--|| PIECE_0_TEXT : is

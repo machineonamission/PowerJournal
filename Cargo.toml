@@ -8,7 +8,7 @@ edition = "2021"
 
 [dependencies]
 anyhow = { version = "1.0.104", features = ["std", "backtrace"] }
-dioxus = { version = "0.8.0-alpha", features = ["router", "fullstack"] }
+dioxus = { version = "0.7.9", features = ["router",] }
 sea-orm = { version = "2.0.0", features = ["sqlx-sqlite", "runtime-tokio-native-tls", "macros",
     "with-chrono", "with-json", "schema-sync", "entity-registry"]}
 zip = "8.6.0"
@@ -30,5 +30,15 @@ web = ["dioxus/web"]
 desktop = ["dioxus/desktop"]
 # The feature that are only required for the mobile = ["dioxus/mobile"] build target should be optional and only enabled in the mobile = ["dioxus/mobile"] feature
 mobile = ["dioxus/mobile"]
-# The feature that are only required for the server = ["dioxus/server"] build target should be optional and only enabled in the server = ["dioxus/server"] feature
-server = ["dioxus/server"]
+
+[profile]
+
+[profile.wasm-dev]
+inherits = "dev"
+opt-level = 1
+
+[profile.server-dev]
+inherits = "dev"
+
+[profile.android-dev]
+inherits = "dev"

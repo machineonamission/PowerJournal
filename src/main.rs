@@ -1,8 +1,9 @@
 // The dioxus prelude contains a ton of common items used in dioxus apps. It's a good idea to import wherever you
 // need dioxus
 use dioxus::prelude::*;
-
-use views::{Blog, Home, Navbar};
+use sea_orm::DatabaseConnection;
+use views::{Journal, Home, Navbar};
+use crate::database::init_db;
 
 /// Define a components module that contains all shared components for our app.
 mod components;
@@ -28,10 +29,10 @@ enum Route {
         Home {},
         // The route attribute can include dynamic parameters that implement [`std::str::FromStr`] and [`std::fmt::Display`] with the `:` syntax.
         // In this case, id will match any integer like `/blog/123` or `/blog/-456`.
-        #[route("/blog/:id")]
+        #[route("/journal/:id")]
         // Fields of the route variant will be passed to the component as props. In this case, the blog component must accept
         // an `id` prop of type `i32`.
-        Blog { id: i32 },
+        Journal { id: i32 },
 }
 
 // We can import assets in dioxus with the `asset!` macro. This macro takes a path to an asset relative to the crate root.
@@ -53,7 +54,17 @@ fn main() {
 /// Components should be annotated with `#[component]` to support props, better error messages, and autocomplete
 #[component]
 fn App() -> Element {
-    // dioxus_core::spawn_forever(importers::applejournal::main());
+    // 1. Unconditionally create and provide a global DB signal
+    let mut db_signal = use_context_provider(|| Signal::<Option<DatabaseConnection>>::new(None));
+
+    // 2. Lazily load the connection asynchronously
+    let _ = use_resource(move || async move {
+        match init_db().await {
+            Ok(db) => db_signal.set(Some(db)),
+            Err(err) => eprintln!("Failed to initialize database: {err}"),
+        }
+    });
+    // dioxus_core::spawn_forever(importers::daylio::main());
     
     // The `rsx!` macro lets us define HTML inside of rust. It expands to an Element with all of our HTML inside.
     rsx! {
@@ -62,7 +73,7 @@ fn App() -> Element {
         document::Link { rel: "icon", href: FAVICON }
         document::Link { rel: "stylesheet", href: MAIN_CSS }
         // The Stylesheet component inserts a style link into the head of the document
-        document::Stylesheet {
+        Stylesheet {
             // Urls are relative to your Cargo.toml file
             href: TAILWIND_CSS
         }
