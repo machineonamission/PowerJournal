@@ -1,0 +1,11 @@
+{
+  "nodeModulesDir": "auto",
+  "imports": {
+    "@tailwindcss/cli": "npm:@tailwindcss/cli@^4.3.3",
+    "tailwindcss": "npm:tailwindcss@^4.3.3"
+  },
+  "allowScripts": {
+    "allow": ["npm:@parcel/watcher@2.5.1"],
+    "deny": []
+  }
+}

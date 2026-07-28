@@ -7,3 +7,4 @@
 **/*.rs.bk
 .idea
 ignore
+node_modules
