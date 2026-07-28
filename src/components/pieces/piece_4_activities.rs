@@ -7,9 +7,6 @@ use dioxus::prelude::*;
 #[component]
 pub fn Piece4Activities(piece: Vec<piece_4_activities::ModelEx>) -> Element {
     // TODO: piece 4 is weird cause its many-many so
-    // rsx! {
-    //     {piece.content}
-    // }
     rsx! {
         p {"{piece:?}"}
     }
