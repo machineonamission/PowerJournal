@@ -18,7 +18,7 @@ use sea_orm::prelude::HasMany::Loaded;
 /// The Home page component that will be rendered when the current route is `[Route::Home]`
 #[component]
 pub fn Piece(piece: piece::ModelEx) -> Element {
-    dbg!(&piece);
+    // dbg!(&piece);
     let node = match piece.piece_type {
         0 => {
             rsx!(Piece0Text {
@@ -41,6 +41,7 @@ pub fn Piece(piece: piece::ModelEx) -> Element {
             })
         }
         4 => {
+            // dbg!(&piece.piece_4_activity);
             if let Loaded(activities) = piece.piece_4_activity {
                 rsx!(Piece4Activities { piece: activities })
             } else {

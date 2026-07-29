@@ -20,7 +20,7 @@ pub fn Journal(id: i32) -> Element {
                 .with((piece::Entity, piece_3_location::Entity))
                 .with((piece::Entity, piece_4_activities::Entity))
                 .order_by_desc(entries::Column::Datetime)
-                .paginate(db, 10);
+                .paginate(db, 100);
             // .paginate(db, 50);
             // note: needs to be changed to WHILE let to properly paginate, but we debug
             if let Some(users) = cursor.fetch_and_next().await.unwrap() {
