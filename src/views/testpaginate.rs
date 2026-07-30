@@ -10,6 +10,6 @@ use crate::components::paginate::Paginate;
 #[component]
 pub fn TestPaginate() -> Element {
     rsx! {
-        Paginate {}
+        // Paginate {}
     }
 }

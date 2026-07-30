@@ -2,7 +2,7 @@
 // need dioxus
 use dioxus::prelude::*;
 use sea_orm::DatabaseConnection;
-use views::{Journal, Home, Navbar, TestPaginate};
+use views::{Journal, Home, Navbar, TestPaginate, JournalPaginate};
 use crate::database::init_db;
 
 /// Define a components module that contains all shared components for our app.
@@ -32,7 +32,7 @@ enum Route {
         #[route("/journal/:id")]
         // Fields of the route variant will be passed to the component as props. In this case, the blog component must accept
         // an `id` prop of type `i32`.
-        Journal { id: i32 },
+        JournalPaginate { id: i32 },
         #[route("/testpaginate")]
         TestPaginate {},
 }

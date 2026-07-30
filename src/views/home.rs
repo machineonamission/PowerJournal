@@ -6,7 +6,7 @@ use crate::Route;
 pub fn Home() -> Element {
     rsx! {
         Link {
-            to: Route::Journal { id: 1 },
+            to: Route::JournalPaginate { id: 1 },
             "open journal 1"
         }
         Link {
