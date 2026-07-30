@@ -41,7 +41,8 @@ pub fn Piece(piece: piece::ModelEx) -> Element {
             })
         }
         4 => {
-            // dbg!(&piece.piece_4_activity);
+            // for some reason, if there's a vec inside, i cant unwrap the object
+            // so we just pull out of the enum manally
             if let Loaded(activities) = piece.piece_4_activity {
                 rsx!(Piece4Activities { piece: activities })
             } else {
@@ -49,7 +50,7 @@ pub fn Piece(piece: piece::ModelEx) -> Element {
             }
         }
         _ => {
-            rsx!(p {"ok so why is the fucking piece of type {piece.piece_type}"})
+            rsx!(p {"invalid piece of type {piece.piece_type}"})
         }
     };
     rsx! {

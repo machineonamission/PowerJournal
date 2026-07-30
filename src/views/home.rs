@@ -9,5 +9,9 @@ pub fn Home() -> Element {
             to: Route::Journal { id: 1 },
             "open journal 1"
         }
+        Link {
+            to: Route::TestPaginate {},
+            "open test paginate"
+        }
     }
 }

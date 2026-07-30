@@ -5,4 +5,5 @@
 pub mod entry;
 pub mod pieces;
 pub mod blobview;
+pub mod paginate;
 

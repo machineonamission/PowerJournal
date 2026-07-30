@@ -15,4 +15,7 @@ mod journal;
 pub use journal::Journal;
 
 mod navbar;
+mod testpaginate;
+pub use testpaginate::TestPaginate;
+
 pub use navbar::Navbar;
