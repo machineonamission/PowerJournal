@@ -2,6 +2,7 @@ use crate::components::pieces::Piece;
 use crate::database::entity::prelude::*;
 use crate::Route;
 use chrono::{DateTime, Utc};
+use dioxus::logger::tracing::log::log;
 use dioxus::prelude::*;
 use sea_orm::compound::EntityLoaderPaginator;
 use sea_orm::{DatabaseConnection, EntityLoaderTrait, ModelTrait, QueryOrder};
@@ -64,21 +65,34 @@ pub fn Paginate(// loader: C,
     //     items.write().push(Item { id, name })
     // };
     let mut current_page = use_signal(|| 0_i64);
-
+    // after literal hours of figuring out a mechanism to get this to work, the sentinels that
+    // turn on with the signal was ultimately Claude's idea, but using onvisible elements and
+    // toggling on mount were my contributions, i tried lots and this works best
+    let mut sentinels_active = use_signal(|| false);
 
     rsx! {
-        for page in (current_page - 2)..=(current_page + 2) {
+        if sentinels_active() && current_page() > 0 {
+            div {
+                onvisible: move |_| {
+                    if current_page() > 0 { debug!("page down"); current_page -= 1; }
+                },
+            }
+        }
+        for page in (current_page() - 1).max(0)..=(current_page() + 1) {
             div {
                 key: "{page}",
-                style: "min-height: 200vh",
-                onvisible: move |_| {
-                    if (page - current_page()).abs() >= 2 && page >= 0 {
-                        *current_page.write() = page;
-                    }
+                style: "min-height: 100vh",
+                onmounted: move |_| {
+                    // last of the initial batch to mount flips this on
+                    sentinels_active.set(true);
                 },
                 Page { num: page }
             }
         }
-        // ...
+        if sentinels_active() {
+            div {
+                onvisible: move |_| { debug!("page up"); current_page += 1; },
+            }
+        }
     }
 }
