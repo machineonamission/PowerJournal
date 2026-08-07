@@ -8,7 +8,7 @@ edition = "2021"
 
 [dependencies]
 anyhow = { version = "1.0.104", features = ["std", "backtrace"] }
-dioxus = { version = "0.7.9", features = ["router",] }
+dioxus = { version = "0.7.10", features = ["router",] }
 sea-orm = { version = "2.0.0", features = ["sqlx-sqlite", "runtime-tokio-native-tls", "macros",
     "with-chrono", "with-json", "schema-sync", "entity-registry"]}
 zip = "8.6.0"

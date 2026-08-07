@@ -1,21 +1,14 @@
 [application]
+name = "PowerJournal"
 
 [web.app]
 
 # HTML title tag content
 title = "PowerJournal"
 
-# include `assets` in web platform
-[web.resource]
+[bundle]
+identifier = "me.machineonamission.powerjournal"
+publisher = "Machine on a Mission"
 
-# Additional CSS style files
-style = []
-
-# Additional JavaScript files
-script = []
-
-[web.resource.dev]
-
-# Javascript code file
-# serve: [dev-server] only
-script = []
+[bundle.windows]
+webview_install_mode = { EmbedBootstrapper = { silent = true } }

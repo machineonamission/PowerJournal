@@ -9,7 +9,8 @@ pub fn Entry(entry: entries::ModelEx) -> Element {
     let dt = DateTime::from_timestamp(entry.datetime, 0).unwrap();
     rsx! {
         div {
-            class: "bg-gray-800 mb-2",
+            background_color: "gray",
+            margin_bottom: "0.5 rem",
             if let Some(title) = entry.title {
                 h2 { "{title}" }
             }
