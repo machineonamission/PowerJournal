@@ -132,8 +132,6 @@ pub fn ImportersView() -> Element {
                     flex_grow: 1,
                     overflow: "scroll",
                     background: "black",
-                    display: "flex",
-                    flex_direction: "column-reverse",
                     for line in log() {
                         code {
                             "{line}\n"
