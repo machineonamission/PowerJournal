@@ -5,7 +5,7 @@ use dioxus::document::Style;
 use dioxus::prelude::*;
 use dioxus_google_font_embedder::{asset_url, embed_google_font};
 use sea_orm::DatabaseConnection;
-use views::{Journal, Home, Navbar, TestPaginate, JournalPaginate, ImportersView};
+use views::*;
 use crate::blob_asset::register_blob_asset;
 use crate::components::font::AHLFont;
 use crate::components::icon::IconSheet;
@@ -27,9 +27,11 @@ enum Route {
         #[route("/import")]
         ImportersView {},
         #[route("/journal/:id")]
-        JournalPaginate { id: i32 },
+        JournalPaginate { id: i64 },
         #[route("/testpaginate")]
         TestPaginate {},
+        #[route("/journals")]
+        JournalList {},
 }
 
 const FAVICON: Asset = asset!("/assets/favicon.ico");

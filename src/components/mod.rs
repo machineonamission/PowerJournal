@@ -9,4 +9,5 @@ pub mod icon;
 pub mod font;
 pub mod progress;
 pub mod blobview;
+pub mod journal_list;
 

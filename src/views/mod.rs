@@ -18,11 +18,10 @@ mod navbar;
 mod testpaginate;
 mod journalpaginate;
 pub mod importers;
+pub mod journal_list;
 
+pub use journal_list::JournalList;
 pub use journalpaginate::JournalPaginate;
-
 pub use importers::ImportersView;
-
 pub use testpaginate::TestPaginate;
-
 pub use navbar::Navbar;

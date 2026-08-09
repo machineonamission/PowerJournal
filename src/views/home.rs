@@ -5,17 +5,29 @@ use crate::Route;
 #[component]
 pub fn Home() -> Element {
     rsx! {
-        Link {
-            to: Route::JournalPaginate { id: 1 },
-            "open journal 1 "
+        h1 {
+            "PowerJournal indev debug menu"
         }
-        Link {
-            to: Route::TestPaginate {},
-            "open test paginate "
-        }
-        Link {
-            to: Route::ImportersView {},
-            "open importers "
+        div {
+            display: "flex",
+            flex_direction: "column",
+            gap: "1rem",
+            Link {
+                to: Route::JournalPaginate { id: 1 },
+                "open journal 1"
+            }
+            Link {
+                to: Route::TestPaginate {},
+                "open test paginate"
+            }
+            Link {
+                to: Route::ImportersView {},
+                "open importers"
+            }
+            Link {
+                to: Route::JournalList {},
+                "open journal list"
+            }
         }
     }
 }
