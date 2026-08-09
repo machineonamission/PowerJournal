@@ -13,6 +13,7 @@ use std::fmt::Debug;
 use std::fs;
 use std::io::{Cursor, Read, Seek};
 use bytes::Bytes;
+use dioxus::signals::Signal;
 use zip::ZipArchive;
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -63,7 +64,7 @@ fn ms_to_datetime(ms: i64) -> Result<chrono::DateTime<Utc>> {
     chrono::DateTime::from_timestamp_millis(ms).context("epic datetime fail")
 }
 
-pub async fn import_daylio(file: Bytes, db: &DatabaseConnection) -> Result<()> {
+pub async fn import_daylio(file: Bytes, db: &DatabaseConnection, mut log: Signal<Vec<String>>) -> Result<()> {
     /// * `file`: file-like object that is a .daylio BACKUP.
     /// More > Backup & Restore > Advanced Options > Export
     println!("beginning import");
