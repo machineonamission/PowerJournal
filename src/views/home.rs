@@ -7,11 +7,15 @@ pub fn Home() -> Element {
     rsx! {
         Link {
             to: Route::JournalPaginate { id: 1 },
-            "open journal 1"
+            "open journal 1 "
         }
         Link {
             to: Route::TestPaginate {},
-            "open test paginate"
+            "open test paginate "
+        }
+        Link {
+            to: Route::ImportersView {},
+            "open importers "
         }
     }
 }

@@ -1,9 +1,11 @@
+#![feature(fn_traits)]
+
 use dioxus::desktop::use_asset_handler;
 use dioxus::document::Style;
 use dioxus::prelude::*;
 use dioxus_google_font_embedder::{asset_url, embed_google_font};
 use sea_orm::DatabaseConnection;
-use views::{Journal, Home, Navbar, TestPaginate, JournalPaginate};
+use views::{Journal, Home, Navbar, TestPaginate, JournalPaginate, ImportersView};
 use crate::blob_asset::register_blob_asset;
 use crate::components::font::AHLFont;
 use crate::components::icon::IconSheet;
@@ -20,7 +22,9 @@ pub mod blob_asset;
 enum Route {
     #[layout(Navbar)]
         #[route("/")]
-        Home {},
+        Home {},        
+        #[route("/import")]
+        ImportersView {},
         #[route("/journal/:id")]
         JournalPaginate { id: i32 },
         #[route("/testpaginate")]

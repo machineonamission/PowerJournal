@@ -17,7 +17,11 @@ pub use journal::Journal;
 mod navbar;
 mod testpaginate;
 mod journalpaginate;
+pub mod importers;
+
 pub use journalpaginate::JournalPaginate;
+
+pub use importers::ImportersView;
 
 pub use testpaginate::TestPaginate;
 

@@ -5,13 +5,14 @@ use anyhow::{anyhow, Context, Result};
 use base64::prelude::BASE64_STANDARD;
 use base64::Engine;
 use chrono::{Datelike, Utc};
-use sea_orm::{ActiveModelTrait, Set};
+use sea_orm::{ActiveModelTrait, DatabaseConnection, Set};
 use sea_orm::{ActiveValue, TransactionTrait};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt::Debug;
 use std::fs;
-use std::io::{Read, Seek};
+use std::io::{Cursor, Read, Seek};
+use bytes::Bytes;
 use zip::ZipArchive;
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -62,12 +63,13 @@ fn ms_to_datetime(ms: i64) -> Result<chrono::DateTime<Utc>> {
     chrono::DateTime::from_timestamp_millis(ms).context("epic datetime fail")
 }
 
-pub async fn import_daylio<R: Read + Seek + Debug>(file: R) -> Result<()> {
+pub async fn import_daylio(file: Bytes, db: &DatabaseConnection) -> Result<()> {
     /// * `file`: file-like object that is a .daylio BACKUP.
     /// More > Backup & Restore > Advanced Options > Export
     println!("beginning import");
     // parse zip
-    let mut masterzip = ZipArchive::new(file)?;
+    let cursor = Cursor::new(file);
+    let mut masterzip = ZipArchive::new(cursor)?;
     let mut buf: String = String::new();
     {
         // grab main file
@@ -87,7 +89,6 @@ pub async fn import_daylio<R: Read + Seek + Debug>(file: R) -> Result<()> {
     // dbg!(json);
     // init db
     println!("file decoded, initing db");
-    let db = init_db().await?;
     let txn = db.begin().await?;
 
     let mut import_journal = journal::ActiveModel::builder().set_title("Daylio Import");
@@ -224,8 +225,8 @@ pub async fn import_daylio<R: Read + Seek + Debug>(file: R) -> Result<()> {
     Ok(())
 }
 
-pub async fn main() {
-    import_daylio(fs::File::open("ignore/backup_2026_07_23 (1).daylio").expect("file open error"))
-        .await
-        .unwrap()
-}
+// pub async fn main() {
+//     import_daylio(fs::File::open("ignore/backup_2026_07_23 (1).daylio").expect("file open error"))
+//         .await
+//         .unwrap()
+// }
