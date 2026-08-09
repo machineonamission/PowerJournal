@@ -23,7 +23,7 @@ pub mod blob_utils;
 enum Route {
     #[layout(Navbar)]
         #[route("/")]
-        Home {},        
+        DebugMenu {},        
         #[route("/import")]
         ImportersView {},
         #[route("/journal/:id")]

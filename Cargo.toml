@@ -3,34 +3,41 @@ name = "powerjournal"
 version = "0.1.0"
 authors = ["Machine on a Mission <machineonamission@gmail.com>"]
 edition = "2024"
-
+license = "LGPL-3.0-or-later"
+description = "PowerJournal description"
+homepage = "https://github.com/machineonamission/powerjournal"
+repository = "https://github.com/machineonamission/powerjournal"
+readme = "README.md"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-anyhow = { version = "1.0.104", features = ["std", "backtrace"] }
-dioxus = { version = "0.7.10", features = ["router",] }
+anyhow = { version = "1.0.104", features = ["std", "backtrace"] }  # error handling
+dioxus = { version = "0.7.10", features = ["router",] }  # ui framework
 sea-orm = { version = "2.0.0", features = ["sqlx-sqlite", "runtime-tokio-native-tls", "macros",
-    "with-chrono", "with-json", "schema-sync", "entity-registry"]}
-zip = "8.6.0"
-dirs = "6.0.0"
-base64 = "0.23.0"
-serde_json = "1.0.151"
-serde = { version = "1.0.229", features = ["derive"] }
-chrono = "0.4.45"
-scraper = "0.27.0"
-path-clean = "1.0.1"
-lightningcss = "1.0.0-alpha.72"
-glam = "0.33.2"
-dioxus_google_font_embedder = "1"
-http = "1.5.0"
-heic = "0.1.6"
-image = { version = "0.25.10", features = ["png"] }
-infer = "0.22.0"
-bytes = "1.12.1"
+    "with-chrono", "with-json", "schema-sync", "entity-registry"]}  # db/orm
+zip = "8.6.0"  # backups are often zip files
+dirs = "6.0.0"  # get data dir
+base64 = "0.23.0"  # daylio backups are base 64?
+serde_json = "1.0.151"  # json serialization
+serde = { version = "1.0.229", features = ["derive"] }  # json serialization
+chrono = "0.4.45"  # time lib
+scraper = "0.27.0"  # apple journal import html parsing
+lightningcss = "1.0.0-alpha.72"  # apple journal import css parsing
+path-clean = "1.0.1"  # zip library spits out bullshit paths
+glam = "0.33.2"  # apple journal importer color -> mood math
+dioxus_google_font_embedder = "1"  # compile time css/font embedding
+http = "1.5.0"  # for parsing urls
+heic = "0.1.6"  # decodes heic/heif
+image = { version = "0.25.10", features = ["png"] }  # encodes pngs
+infer = "0.22.0"# infers mime type
+bytes = "1.12.1" # dioxus internal vec u8 wrapper, fuck off
+open = "5.4.1"  # cross-platform open file/folder/url in default application
+tokio = { version = "1.53.1", features = ["fs"] }  # literally just need async fs funcs
 
 [features]
 default = ["desktop"]
 #i dont think you can compile sea-orm for wasm, lmfao
+# is a nice thought for the future, but lol
 #web = ["dioxus/web"]
 desktop = ["dioxus/desktop"]
 mobile = ["dioxus/mobile"]
