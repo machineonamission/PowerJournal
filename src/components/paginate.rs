@@ -13,7 +13,7 @@ fn Page<E: EntityTrait, C: EntityLoaderTrait<E> + 'static>(
     loader: Signal<C>,
     render: Callback<C::ModelEx, Element>,
 ) -> Element {
-    let db_signal = use_context::<Signal<Option<DatabaseConnection>>>();
+    let db_signal = use_context::<Resource<DatabaseConnection>>();
     let entries: Resource<Vec<C::ModelEx>> = use_resource(move || async move {
         // If either the DB or Paginator isn't ready yet, abort and return None
         debug!("loading {num}");
@@ -48,7 +48,7 @@ pub fn Paginate<E: EntityTrait, C: EntityLoaderTrait<E> + 'static>(
     // toggling on mount were my contributions, i tried lots and this works best
     let mut sentinels_active = use_signal(|| false);
 
-    let db_signal = use_context::<Signal<Option<DatabaseConnection>>>();
+    let db_signal = use_context::<Resource<DatabaseConnection>>();
 
     // fires once when db becomes Some, stays cached after — total_pages() reads the cache
     let total_pages: Resource<i64> = use_resource(move || async move {

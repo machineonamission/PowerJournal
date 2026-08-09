@@ -1,6 +1,10 @@
+use dioxus::document::Style;
 use dioxus::prelude::*;
+use dioxus_google_font_embedder::{asset_url, embed_google_font};
 use sea_orm::DatabaseConnection;
 use views::{Journal, Home, Navbar, TestPaginate, JournalPaginate};
+use crate::components::font::AHLFont;
+use crate::components::icon::IconSheet;
 use crate::database::init_db;
 
 mod components;
@@ -26,24 +30,30 @@ fn main() {
     dioxus::launch(App);
 }
 
-/// App is the main component of our app. 
+
+/// App is the main component of our app.
 #[component]
 fn App() -> Element {
-    // 1. Unconditionally create and provide a global DB signal
-    let mut db_signal = use_context_provider(|| Signal::<Option<DatabaseConnection>>::new(None));
-
-    // 2. Lazily load the connection asynchronously
-    let _ = use_resource(move || async move {
-        match init_db().await {
-            Ok(db) => db_signal.set(Some(db)),
-            Err(err) => eprintln!("Failed to initialize database: {err}"),
-        }
+    // load db async and serve to children components
+    let db_signal = use_resource(move || async move {
+        init_db().await.unwrap()
     });
-    // dioxus_core::spawn_forever(importers::daylio::main());
-    
+    use_context_provider(|| db_signal);
+
+
+    let dark_mode = use_signal(|| true);
+    use_effect(move || {
+        let value = if dark_mode() { "dark" } else { "light" };
+        document::eval(&format!(
+            r#"document.documentElement.setAttribute("data-bs-theme", "{value}");"#
+        ));
+    });
+
     rsx! {
         document::Link { rel: "icon", href: FAVICON }
-
+        Stylesheet { href: asset_url!("https://cdn.jsdelivr.net/npm/bootstrap@latest/dist/css/bootstrap.min.css") }
+        AHLFont {}
+        IconSheet {}
         Router::<Route> {}
     }
 }

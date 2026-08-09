@@ -6,4 +6,6 @@ pub mod entry;
 pub mod pieces;
 pub mod blobview;
 pub mod paginate;
+pub mod icon;
+pub mod font;
 

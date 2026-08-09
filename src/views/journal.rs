@@ -9,10 +9,10 @@ use crate::components::entry::Entry;
 
 #[component]
 pub fn Journal(id: i32) -> Element {
-    let db_signal = use_context::<Signal<Option<DatabaseConnection>>>();
+    let db_signal = use_context::<Resource<DatabaseConnection>>();
     // Fetch data asynchronously when the database becomes available
     let entries: Resource<Vec<entries::ModelEx>> = use_resource(move || async move {
-        if let Some(db) = db_signal.read().as_ref() {
+        if let Some(db) = db_signal().as_ref() {
             let mut cursor = entries::Entity::load()
                 .with((piece::Entity, piece_0_text::Entity))
                 .with((piece::Entity, piece_1_mood::Entity))
