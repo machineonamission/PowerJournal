@@ -7,6 +7,9 @@ pub fn Progress(max: Signal<i64>, current: Signal<i64>) -> Element {
         current() as f64 * 100f64 / max() as f64
     });
     rsx! {
+        p {
+            "{current}/{max}"
+        }
         div {
             class: "progress",
             role: "progressbar",
@@ -15,10 +18,11 @@ pub fn Progress(max: Signal<i64>, current: Signal<i64>) -> Element {
             aria_valuemin: "0",
             aria_valuemax: "{max}",
             flex_shrink: "0",
+            height: "1.5rem",
             div {
-                class: "progress-bar progress-bar-striped",
+                class: "progress-bar progress-bar-striped progress-bar-animated",
                 style: "width: {width}%",
-                "{current}/{max}"
+                "{width:.1}%"
             }
         }
     }

@@ -6,6 +6,7 @@ use sea_orm::DatabaseConnection;
 pub mod daylio;
 pub mod applejournal;
 pub mod common;
+pub mod powerjournal;
 
 
 

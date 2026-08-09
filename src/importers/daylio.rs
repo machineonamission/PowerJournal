@@ -251,10 +251,10 @@ pub async fn import_daylio(
         master_entry.insert(&txn).await?;
 
     }
+    current_prog_signal.set(max_prog_signal());
     log_str("Committing database transaction...");
     // importing done, commit transaction (all is rolled back if errors before we get here)
     txn.commit().await?;
-    current_prog_signal.set(max_prog_signal());
     log_str("Finished!");
     Ok(())
 }

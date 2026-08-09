@@ -16,6 +16,7 @@ use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
 use std::fs;
 use std::io::{Cursor, Read, Seek};
+use std::path::PathBuf;
 use zip::ZipArchive;
 use crate::importers::common::ImporterArgs;
 
@@ -137,7 +138,7 @@ pub async fn import_apple_journal(
         mut current_prog_signal,
         mut max_prog_signal,
     } = args;
-    
+
     let mut log = move |message: String| {
         log_signal.write().push(message);
     };
@@ -174,6 +175,26 @@ pub async fn import_apple_journal(
 
     let import_journal = import_journal.insert(&txn).await?;
 
+
+    log_str("Calculating backup size...");
+
+    let mut entries = Vec::<PathBuf>::new();
+    for i in 0..masterzip.len() {
+        // read file contents if it is an entry
+        // inside block because getting a ZipFile object is a mutable borrow on masterzip,
+        // and you can only do one of those at a time, so we gotta let file go out of scope
+        {
+            let mut file = masterzip.by_index(i)?;
+            let path = file.enclosed_name().context("zip enclosed name error")?;
+            if !path.starts_with("AppleJournalEntries/Entries") || file.is_dir() {
+                continue;
+            }
+            entries.push(path)
+        }
+    }
+    max_prog_signal.set(entries.len() as i64);
+
+
     // for every file in the zip
     for i in 0..masterzip.len() {
         // read file contents if it is an entry
@@ -187,8 +208,10 @@ pub async fn import_apple_journal(
                 continue;
             }
             log(format!("Processing entry {:?}", &path));
+            *current_prog_signal.write() += 1;
             file.read_to_string(&mut buf)?;
         }
+
         // for every entry in the zip:
 
         // init entry db object
@@ -340,6 +363,7 @@ pub async fn import_apple_journal(
         // log_str("Committing to database...");
         master_entry.insert(&txn).await?;
     }
+    current_prog_signal.set(max_prog_signal());
     log_str("Committing database transaction...");
     txn.commit().await?;
     log_str("Finished!");

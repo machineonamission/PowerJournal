@@ -6,6 +6,7 @@ use sea_orm::DatabaseConnection;
 use std::pin::Pin;
 use crate::components::progress::Progress;
 use crate::importers::common::ImporterArgs;
+use crate::importers::powerjournal::import_powerjournal;
 
 // so the Bytes object just HAPPENS to be what Dioxus file uploads are. so fucking, whatever. its a fine object for this.
 type ImportFuture<'a> = Pin<Box<dyn Future<Output = anyhow::Result<()>> + 'a>>;
@@ -22,7 +23,16 @@ pub struct Importer {
 /// The Home page component that will be rendered when the current route is `[Route::Home]`
 #[component]
 pub fn ImportersView() -> Element {
-    let IMPORTERS: [Importer; 2] = [
+    let IMPORTERS: [Importer; 3] = [
+        Importer {
+            name: "PowerJournal",
+            function: |args| Box::pin(import_powerjournal(args)),
+            docs: || {
+                rsx! {
+                    p { "NOT IMPLEMENTED. Placeholder UI." }
+                }
+            },
+        },
         Importer {
             name: "Daylio",
             function: |args| Box::pin(daylio::import_daylio(args)),
@@ -97,7 +107,7 @@ pub fn ImportersView() -> Element {
             flex_direction: "column",
             height: "100vh",
             h1 {
-                "3rd-party Journal Importer"
+                "Journal Importer"
             }
             form {
                 for (i, importer) in IMPORTERS.iter().enumerate() {
