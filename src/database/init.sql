@@ -1,3 +1,5 @@
+-- THIS IS OUTDATED, FOR LATEST SCHEMA CHECK THE entity FOLDER
+
 -- PWRJRNL in phone keys i think its cute
 PRAGMA application_id=7975765;
 -- increment with each public schema change

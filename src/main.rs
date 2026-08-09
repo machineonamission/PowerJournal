@@ -1,8 +1,10 @@
+use dioxus::desktop::use_asset_handler;
 use dioxus::document::Style;
 use dioxus::prelude::*;
 use dioxus_google_font_embedder::{asset_url, embed_google_font};
 use sea_orm::DatabaseConnection;
 use views::{Journal, Home, Navbar, TestPaginate, JournalPaginate};
+use crate::blob_asset::register_blob_asset;
 use crate::components::font::AHLFont;
 use crate::components::icon::IconSheet;
 use crate::database::init_db;
@@ -11,6 +13,7 @@ mod components;
 mod views;
 mod database;
 mod importers;
+pub mod blob_asset;
 
 #[derive(Debug, Clone, Routable, PartialEq)]
 #[rustfmt::skip]
@@ -35,11 +38,12 @@ fn main() {
 #[component]
 fn App() -> Element {
     // load db async and serve to children components
-    let db_signal = use_resource(move || async move {
+    let db_signal_raw = use_resource(move || async move {
         init_db().await.unwrap()
     });
-    use_context_provider(|| db_signal);
-
+    let db_signal = use_context_provider(|| db_signal_raw);
+    
+    register_blob_asset(db_signal);
 
     let dark_mode = use_signal(|| true);
     use_effect(move || {

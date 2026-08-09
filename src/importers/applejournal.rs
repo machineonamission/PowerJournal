@@ -37,11 +37,12 @@ struct LocationSidecar {
     visits: Vec<Location>,
 }
 
-/// THIS FUNCTION WAS WRITTEN BY GEMINI
+/// THIS FUNCTION WAS WRITTEN BY GEMINI (with heavy prompting)
 pub fn calculate_mood_valence(point: (f64, f64, f64)) -> f64 {
     // see https://github.com/machineonamission/applejournalmoodcolors
     let p = DVec3::from(point);
     // these represent a piecewise RGB gradient that is my best reconstruction of what the export uses internally
+    // these were computed like a while ago
     let gvertices = [
         DVec3::new(254.96, 238.04, 230.99),
         DVec3::new(248.67, 219.51, 177.07),
@@ -169,8 +170,6 @@ pub async fn import_apple_journal<R: Read + Seek + Debug>(file: R) -> Result<()>
 
         // init entry db object
         let mut master_entry = entries::ActiveModel::builder();
-        // .set_datetime(entry.datetime / 1000) // daylio does ms, i do s like a NORMAL PERSON
-        // .set_title(entry.note_title.clone());
 
         let document = Html::parse_document(&*buf);
 

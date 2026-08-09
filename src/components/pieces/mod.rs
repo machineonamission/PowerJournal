@@ -32,7 +32,7 @@ pub fn Piece(piece: piece::ModelEx) -> Element {
         }
         2 => {
             rsx!(Piece2Blob {
-                piece: piece.piece_2_blob.unwrap()
+                id: piece.id
             })
         }
         3 => {
