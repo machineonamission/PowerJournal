@@ -4,10 +4,12 @@ use bytes::Bytes;
 use dioxus::prelude::*;
 use sea_orm::DatabaseConnection;
 use std::pin::Pin;
+use crate::components::progress::Progress;
+use crate::importers::common::ImporterArgs;
 
 // so the Bytes object just HAPPENS to be what Dioxus file uploads are. so fucking, whatever. its a fine object for this.
 type ImportFuture<'a> = Pin<Box<dyn Future<Output = anyhow::Result<()>> + 'a>>;
-type ImportFn = for<'a> fn(Bytes, &'a DatabaseConnection, Signal<Vec<String>>) -> ImportFuture<'a>;
+type ImportFn = for<'a> fn(ImporterArgs<'a>) -> ImportFuture<'a>;
 
 #[derive(Clone, Debug, PartialEq, Copy)]
 pub struct Importer {
@@ -16,13 +18,14 @@ pub struct Importer {
     pub docs: fn() -> Element,
 }
 
+
 /// The Home page component that will be rendered when the current route is `[Route::Home]`
 #[component]
 pub fn ImportersView() -> Element {
     let IMPORTERS: [Importer; 2] = [
         Importer {
             name: "Daylio",
-            function: |file, db, log| Box::pin(daylio::import_daylio(file, db, log)),
+            function: |args| Box::pin(daylio::import_daylio(args)),
             docs: || {
                 rsx! {
                     p { "This importer takes a .daylio BACKUP file" }
@@ -37,7 +40,7 @@ pub fn ImportersView() -> Element {
         },
         Importer {
             name: "Apple Journal",
-            function: |file, db, log| Box::pin(applejournal::import_apple_journal(file, db, log)),
+            function: |args| Box::pin(applejournal::import_apple_journal(args)),
             docs: || {
                 rsx! {
                     p { "This importer takes a .zip of an Apple Journal Export." }
@@ -56,6 +59,8 @@ pub fn ImportersView() -> Element {
     ];
     let a = rsx! {};
     let mut log = use_signal(Vec::<String>::new);
+    let mut max_prog = use_signal(|| 0i64);
+    let mut current_prog = use_signal(|| 0i64);
     let mut selection = use_signal(|| Option::<usize>::None);
     let selected_importer: Memo<Option<Importer>> = use_memo(move || {
         if let Some(selected) = selection() {
@@ -67,6 +72,25 @@ pub fn ImportersView() -> Element {
     let mut file = use_signal(|| Option::<Bytes>::None);
 
     let db_signal = use_context::<Resource<DatabaseConnection>>();
+
+
+    // runs after every render where `log` changed
+    use_effect(move || {
+        log.read(); // subscribe to changes
+        spawn(async move {
+            // scroll to bottom if user is near bottom
+            let _ = document::eval(
+                r#"
+                let el = document.getElementById("log_pre");
+                if (el) {
+                    el.scrollTop = el.scrollHeight;
+                }
+            "#,
+            )
+                .await;
+        });
+    });
+
     rsx! {
         div {
             display: "flex",
@@ -107,8 +131,12 @@ pub fn ImportersView() -> Element {
                         // pick multiple files
                         multiple: false,
                         onchange: move |evt| async move {
-                            let bytes = evt.files()[0].read_bytes().await.unwrap();
+                            let files = evt.files();
+                            if files.len() > 0 {
+                                let bytes = files[0].read_bytes().await.unwrap();
                             file.set(Some(bytes))
+                            }
+
                         }
                     }
                     if file().is_some() {
@@ -117,7 +145,14 @@ pub fn ImportersView() -> Element {
                             class: "btn btn-primary",
                             onclick: move |_| async move {
                                 let db = db_signal().unwrap();
-                                selected.function.call((file().as_ref().unwrap().clone(), &db, log)).await.unwrap();
+                                let args = ImporterArgs {
+                                    file: file().unwrap(),
+                                    db: &db,
+                                    log_signal: log,
+                                    current_prog_signal: current_prog,
+                                    max_prog_signal: max_prog,
+                                };
+                                selected.function.call((args,)).await.unwrap();
                             },
                             "Import"
                         }
@@ -127,8 +162,13 @@ pub fn ImportersView() -> Element {
             }
             // TODO: scroll to bottom
             if !log().is_empty() {
+                Progress {
+                    max: max_prog,
+                    current: current_prog,
+                }
                 h2 {"Log:"}
                 pre {
+                    id: "log_pre",
                     flex_grow: 1,
                     overflow: "scroll",
                     background: "black",

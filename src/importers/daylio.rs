@@ -1,10 +1,12 @@
 use crate::database;
 use crate::database::entity::prelude::*;
 use crate::database::init_db;
-use anyhow::{anyhow, Context, Result};
-use base64::prelude::BASE64_STANDARD;
+use anyhow::{Context, Result, anyhow};
 use base64::Engine;
+use base64::prelude::BASE64_STANDARD;
+use bytes::Bytes;
 use chrono::{Datelike, Utc};
+use dioxus::prelude::*;
 use sea_orm::{ActiveModelTrait, DatabaseConnection, Set};
 use sea_orm::{ActiveValue, TransactionTrait};
 use serde::{Deserialize, Serialize};
@@ -12,9 +14,8 @@ use std::collections::HashMap;
 use std::fmt::Debug;
 use std::fs;
 use std::io::{Cursor, Read, Seek};
-use bytes::Bytes;
-use dioxus::signals::Signal;
 use zip::ZipArchive;
+use crate::importers::common::ImporterArgs;
 
 #[derive(Serialize, Deserialize, Debug)]
 struct Mood {
@@ -64,10 +65,28 @@ fn ms_to_datetime(ms: i64) -> Result<chrono::DateTime<Utc>> {
     chrono::DateTime::from_timestamp_millis(ms).context("epic datetime fail")
 }
 
-pub async fn import_daylio(file: Bytes, db: &DatabaseConnection, mut log: Signal<Vec<String>>) -> Result<()> {
+pub async fn import_daylio(
+    mut args: ImporterArgs<'_>,
+) -> Result<()> {
     /// * `file`: file-like object that is a .daylio BACKUP.
     /// More > Backup & Restore > Advanced Options > Export
-    println!("beginning import");
+
+    let ImporterArgs {
+        file,
+        db,
+        mut log_signal,
+        mut current_prog_signal,
+        mut max_prog_signal,
+    } = args;
+
+    let mut log = move |message: String| {
+        log_signal.write().push(message);
+    };
+
+    let mut log_str = move |message: &str| {
+        log(message.to_string());
+    };
+    log_str("beginning import...");
     // parse zip
     let cursor = Cursor::new(file);
     let mut masterzip = ZipArchive::new(cursor)?;
@@ -89,12 +108,12 @@ pub async fn import_daylio(file: Bytes, db: &DatabaseConnection, mut log: Signal
     let json: DaylioBackup = serde_json::from_str(&*decoded_string)?;
     // dbg!(json);
     // init db
-    println!("file decoded, initing db");
     let txn = db.begin().await?;
 
-    let mut import_journal = journal::ActiveModel::builder().set_title("Daylio Import");
+    log_str("prepping for entry import...");
 
-    println!("mapping daylio IDs");
+    let mut import_journal = journal::ActiveModel::builder().set_title("Daylio Import");
+    let import_journal = import_journal.insert(&txn).await?;
 
     // map FROM daylio IDs TO powerjournal IDs
     let mut tag_map: HashMap<i32, i64> = HashMap::new();
@@ -151,50 +170,62 @@ pub async fn import_daylio(file: Bytes, db: &DatabaseConnection, mut log: Signal
         );
     }
 
+    max_prog_signal.set(json.day_entries.len() as i64);
+
     // main entry loop
-    for entry in json.day_entries {
-        println!("entry {}", entry.id);
+    for (i, entry) in json.day_entries.iter().enumerate() {
+        current_prog_signal.set(i as i64);
+        log(format!("Processing entry {:?}",  entry.id));
         let mut master_entry = entries::ActiveModel::builder()
             .set_datetime(entry.datetime / 1000) // daylio does ms, i do s like a NORMAL PERSON
             .set_title(entry.note_title.clone())
             // all daylio entries have moods, thats how the fucking app works
             .add_piece(
-                piece::ActiveModel::builder().set_piece_1_mood(
-                    piece_1_mood::ActiveModel::builder().set_pleasantness(
-                        *mood_map
-                            .get(&entry.mood)
-                            .context("couldnt get valence for mood")?,
-                    ),
-                ).set_piece_type(1),
-            );
+                piece::ActiveModel::builder()
+                    .set_piece_1_mood(
+                        piece_1_mood::ActiveModel::builder().set_pleasantness(
+                            *mood_map
+                                .get(&entry.mood)
+                                .context("couldnt get valence for mood")?,
+                        ),
+                    )
+                    .set_piece_type(1),
+            )
+            .set_journal_id(import_journal.id);
 
         // add text piece if note has text
-        if let Some(note) = entry.note {
+        if let Some(ref note) = entry.note {
             master_entry = master_entry.add_piece(
-                piece::ActiveModel::builder().set_piece_0_text(
-                    piece_0_text::ActiveModel::builder()
-                        .set_title(entry.note_title.clone())
-                        .set_content(note),
-                ).set_piece_type(0),
+                piece::ActiveModel::builder()
+                    .set_piece_0_text(
+                        piece_0_text::ActiveModel::builder()
+                            .set_title(entry.note_title.clone())
+                            .set_content(note),
+                    )
+                    .set_piece_type(0),
             );
         }
 
         // add activities if note has them
         if !entry.tags.is_empty() {
             let mut activity_piece = piece::ActiveModel::builder();
-            for tag in entry.tags {
-                activity_piece = activity_piece.add_piece_4_activity(
-                    piece_4_activities::ActiveModel::builder()
-                        .set_activity_id(tag_map.get(&tag).cloned().context("epic tag failure")?)
-                        .set_value(1),
-                ).set_piece_type(4)
+            for tag in entry.tags.clone() {
+                activity_piece = activity_piece
+                    .add_piece_4_activity(
+                        piece_4_activities::ActiveModel::builder()
+                            .set_activity_id(
+                                tag_map.get(&tag).cloned().context("epic tag failure")?,
+                            )
+                            .set_value(1),
+                    )
+                    .set_piece_type(4)
             }
             master_entry = master_entry.add_piece(activity_piece);
         }
 
         // add assets if note has them
         if !entry.assets.is_empty() {
-            for asset_id in entry.assets {
+            for asset_id in &entry.assets {
                 // lookup place in zip of this asset (by precomputed checksum map)
                 let asset = asset_id_to_zip
                     .get(&asset_id)
@@ -206,23 +237,25 @@ pub async fn import_daylio(file: Bytes, db: &DatabaseConnection, mut log: Signal
                 file_in_zip.read_to_end(&mut buf)?;
                 // add piece with blob
                 master_entry = master_entry.add_piece(
-                    piece::ActiveModel::builder().set_piece_2_blob(
-                        piece_2_blob::ActiveModel::builder()
-                            .set_data(buf)
-                            .set_blob_type(0), // assume they're all images for now
-                    ).set_piece_type(2),
+                    piece::ActiveModel::builder()
+                        .set_piece_2_blob(
+                            piece_2_blob::ActiveModel::builder()
+                                .set_data(buf)
+                                .set_blob_type(0), // assume they're all images for now
+                        )
+                        .set_piece_type(2),
                 )
             }
         }
         // we've prepped all the pieces, commit to transaction
-        import_journal = import_journal.add_entry(master_entry);
+        master_entry.insert(&txn).await?;
+
     }
-
-    import_journal.insert(&txn).await?;
-
+    log_str("Committing database transaction...");
     // importing done, commit transaction (all is rolled back if errors before we get here)
     txn.commit().await?;
-    println!("finished!");
+    current_prog_signal.set(max_prog_signal());
+    log_str("Finished!");
     Ok(())
 }
 
