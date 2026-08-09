@@ -10,9 +10,7 @@ use sea_orm::entity::prelude::*;
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
     pub id: i64,
-    #[sea_orm(column_type = "Text", nullable)]
     pub title: Option<String>,
-    #[sea_orm(column_type = "Text")]
     pub content: String,
     #[sea_orm(
         belongs_to,

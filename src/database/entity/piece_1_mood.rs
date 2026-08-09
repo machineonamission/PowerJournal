@@ -9,11 +9,8 @@ use sea_orm::entity::prelude::*;
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
     pub id: i64,
-
     //  integers are fucky, and 30 bits per entry doesnt matter. f64: -1 to 1, just like apple
-    #[sea_orm(column_type = "Double")]
     pub pleasantness: f64,
-    #[sea_orm(column_type = "Double", nullable)]
     pub energy: Option<f64>,
     #[sea_orm(
         belongs_to,

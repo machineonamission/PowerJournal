@@ -16,6 +16,7 @@ mod views;
 mod database;
 mod importers;
 pub mod blob_asset;
+pub mod blob_utils;
 
 #[derive(Debug, Clone, Routable, PartialEq)]
 #[rustfmt::skip]

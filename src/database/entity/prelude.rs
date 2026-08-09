@@ -8,5 +8,6 @@ pub use super::piece_1_mood;
 pub use super::piece_2_blob;
 pub use super::piece_3_location;
 pub use super::piece_4_activities;
+pub use super::blobs;
 pub use super::settings;
 pub use super::journal;

@@ -13,7 +13,7 @@ pub fn JournalPaginate(id: i32) -> Element {
     let mut cursor = use_signal(|| entries::Entity::load()
         .with((piece::Entity, piece_0_text::Entity))
         .with((piece::Entity, piece_1_mood::Entity))
-        // .with((piece::Entity, piece_2_blob::Entity))
+        .with((piece::Entity, piece_2_blob::Entity))
         .with((piece::Entity, piece_3_location::Entity))
         .with((piece::Entity, piece_4_activities::Entity))
         .order_by_desc(entries::Column::Datetime));

@@ -1,8 +1,9 @@
 use crate::database::entity::prelude::*;
 use dioxus::desktop::{use_asset_handler, AssetRequest, RequestAsyncResponder};
 use dioxus::prelude::*;
-use sea_orm::{DatabaseConnection, EntityTrait};
+use sea_orm::{DatabaseConnection, EntityLoaderTrait, EntityTrait, QueryOrder};
 
+// lets the renderer have an image like <img src="/dbimage/1" /> and it will fetch the image from the database
 pub fn register_blob_asset(db_signal: Resource<DatabaseConnection>) {
     use_asset_handler("dbimage", move |request: AssetRequest, responder:RequestAsyncResponder| {
         // dbg!(&request);
@@ -15,15 +16,17 @@ pub fn register_blob_asset(db_signal: Resource<DatabaseConnection>) {
         let db = db_signal().unwrap();
 
         spawn(async move {
-            let data = piece_2_blob::Entity::find_by_id(id)
+            let data = piece_2_blob::Entity::load()
+                .with(blobs::Entity)
+                .filter_by_id(id)
                 .one(&db)
                 .await
-                //TODO: more graceful error handling
                 .unwrap()
                 .unwrap();
+            // dbg!(&data.mime_type);
             let response = http::Response::builder()
-                .header("Content-Type", "image/heic")
-                .body(data.data)
+                .header("Content-Type", data.mime_type)
+                .body(data.blob.unwrap().data)
                 .unwrap();
             responder.respond(response);
         });

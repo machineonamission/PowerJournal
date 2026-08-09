@@ -9,10 +9,10 @@ use sea_orm::entity::prelude::*;
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
     pub id: i64,
-    // 0 = image, 1 = audio, 2 = video
-    pub blob_type: i64,
-    #[sea_orm(column_type = "Blob")]
-    pub data: Vec<u8>,
+    pub mime_type: String,
+    // ACTUAL DATA IS STORED IN BLOBS TABLE!
+    #[sea_orm(has_one)]
+    pub blob: HasOne<super::blobs::Entity>,
     #[sea_orm(
         belongs_to,
         from = "id",

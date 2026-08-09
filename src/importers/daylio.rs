@@ -1,21 +1,18 @@
-use crate::database;
 use crate::database::entity::prelude::*;
-use crate::database::init_db;
+use crate::importers::common::ImporterArgs;
 use anyhow::{Context, Result, anyhow};
 use base64::Engine;
 use base64::prelude::BASE64_STANDARD;
-use bytes::Bytes;
-use chrono::{Datelike, Utc};
+use chrono::Utc;
 use dioxus::prelude::*;
-use sea_orm::{ActiveModelTrait, DatabaseConnection, Set};
-use sea_orm::{ActiveValue, TransactionTrait};
+use sea_orm::ActiveModelTrait;
+use sea_orm::TransactionTrait;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt::Debug;
-use std::fs;
-use std::io::{Cursor, Read, Seek};
+use std::io::{Cursor, Read};
 use zip::ZipArchive;
-use crate::importers::common::ImporterArgs;
+use crate::blob_utils::infer_mime_type;
 
 #[derive(Serialize, Deserialize, Debug)]
 struct Mood {
@@ -235,13 +232,21 @@ pub async fn import_daylio(
                 let mut file_in_zip = masterzip.by_index(asset)?;
                 let mut buf: Vec<u8> = Vec::new();
                 file_in_zip.read_to_end(&mut buf)?;
+
+                let mt = infer_mime_type(&buf);
+
                 // add piece with blob
                 master_entry = master_entry.add_piece(
                     piece::ActiveModel::builder()
                         .set_piece_2_blob(
                             piece_2_blob::ActiveModel::builder()
-                                .set_data(buf)
-                                .set_blob_type(0), // assume they're all images for now
+                                // .set_data(buf)
+                                .set_mime_type(mt)
+                                .set_blob(
+                                    blobs::ActiveModel::builder()
+                                        .set_data(buf)
+                                )
+
                         )
                         .set_piece_type(2),
                 )

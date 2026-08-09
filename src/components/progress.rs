@@ -1,4 +1,3 @@
-use std::thread::current;
 use dioxus::prelude::*;
 
 #[component]
@@ -20,8 +19,9 @@ pub fn Progress(max: Signal<i64>, current: Signal<i64>) -> Element {
             flex_shrink: "0",
             height: "1.5rem",
             div {
-                class: "progress-bar progress-bar-striped progress-bar-animated",
-                style: "width: {width}%",
+                class: "progress-bar progress-bar-striped",
+                width: "{width}%",
+                style: "--bs-progress-bar-transition: none;",
                 "{width:.1}%"
             }
         }

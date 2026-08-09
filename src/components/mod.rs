@@ -8,4 +8,5 @@ pub mod paginate;
 pub mod icon;
 pub mod font;
 pub mod progress;
+pub mod blobview;
 
