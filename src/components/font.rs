@@ -1,5 +1,5 @@
-use dioxus::prelude::*;
 use dioxus::document::Style;
+use dioxus::prelude::*;
 use dioxus_google_font_embedder::{asset_url, embed_google_font};
 
 #[component]

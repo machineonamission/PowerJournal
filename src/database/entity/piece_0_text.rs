@@ -2,7 +2,6 @@
 
 use sea_orm::entity::prelude::*;
 
-
 // -- simple block of text
 #[sea_orm::model]
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel)]

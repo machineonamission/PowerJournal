@@ -1,12 +1,12 @@
 use crate::Route;
+use crate::components::progress::Progress;
+use crate::importers::common::ImporterArgs;
+use crate::importers::powerjournal::import_powerjournal;
 use crate::importers::{applejournal, daylio};
 use bytes::Bytes;
 use dioxus::prelude::*;
 use sea_orm::DatabaseConnection;
 use std::pin::Pin;
-use crate::components::progress::Progress;
-use crate::importers::common::ImporterArgs;
-use crate::importers::powerjournal::import_powerjournal;
 
 // so the Bytes object just HAPPENS to be what Dioxus file uploads are. so fucking, whatever. its a fine object for this.
 type ImportFuture<'a> = Pin<Box<dyn Future<Output = anyhow::Result<()>> + 'a>>;
@@ -18,7 +18,6 @@ pub struct Importer {
     pub function: ImportFn,
     pub docs: fn() -> Element,
 }
-
 
 /// The Home page component that will be rendered when the current route is `[Route::Home]`
 #[component]
@@ -83,7 +82,6 @@ pub fn ImportersView() -> Element {
 
     let db_signal = use_context::<Resource<DatabaseConnection>>();
 
-
     // runs after every render where `log` changed
     use_effect(move || {
         log.read(); // subscribe to changes
@@ -97,7 +95,7 @@ pub fn ImportersView() -> Element {
                 }
             "#,
             )
-                .await;
+            .await;
         });
     });
 

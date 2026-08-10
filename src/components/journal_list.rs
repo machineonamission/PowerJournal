@@ -1,8 +1,8 @@
-use dioxus::prelude::*;
 use crate::Route;
+use crate::components::pieces::Piece;
 use crate::database::entity::prelude::*;
 use chrono::{DateTime, Utc};
-use crate::components::pieces::Piece;
+use dioxus::prelude::*;
 
 #[component]
 pub fn JournalListEntry(journal: journal::ModelEx) -> Element {

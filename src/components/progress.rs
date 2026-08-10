@@ -2,9 +2,7 @@ use dioxus::prelude::*;
 
 #[component]
 pub fn Progress(max: Signal<i64>, current: Signal<i64>) -> Element {
-    let width: Memo<f64> = use_memo(move || {
-        current() as f64 * 100f64 / max() as f64
-    });
+    let width: Memo<f64> = use_memo(move || current() as f64 * 100f64 / max() as f64);
     rsx! {
         p {
             "{current}/{max}"

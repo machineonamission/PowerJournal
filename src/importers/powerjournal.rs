@@ -1,9 +1,7 @@
-use dioxus::prelude::WritableExt;
 use crate::importers::common::ImporterArgs;
+use dioxus::prelude::WritableExt;
 
-pub async fn import_powerjournal(
-    mut args: ImporterArgs<'_>,
-) -> anyhow::Result<()> {
+pub async fn import_powerjournal(mut args: ImporterArgs<'_>) -> anyhow::Result<()> {
     let ImporterArgs {
         file,
         db,

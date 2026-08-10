@@ -1,7 +1,7 @@
-use std::path::PathBuf;
+use crate::Route;
 use dioxus::prelude::*;
 use sea_orm::DatabaseConnection;
-use crate::Route;
+use std::path::PathBuf;
 
 /// The Home page component that will be rendered when the current route is `[Route::Home]`
 #[component]
@@ -44,6 +44,7 @@ pub fn DebugMenu() -> Element {
                 "open journal list"
             }
             button {
+                class: "btn btn-primary",
                 onclick: move |_| {
                     let mut path: PathBuf = dirs::data_local_dir().unwrap();
                     path.push("PowerJournal");
@@ -52,6 +53,7 @@ pub fn DebugMenu() -> Element {
                 "open db folder"
             }
             button {
+                class: "btn btn-danger",
                 onclick: move |_| async move {
                     db_signal().unwrap().close().await.unwrap();
                     let mut path: PathBuf = dirs::data_local_dir().unwrap();

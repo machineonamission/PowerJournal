@@ -7,11 +7,7 @@ use sea_orm::entity::prelude::*;
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel)]
 #[sea_orm(table_name = "settings")]
 pub struct Model {
-    #[sea_orm(
-        primary_key,
-        auto_increment = false,
-        column_type = "Text",
-    )]
+    #[sea_orm(primary_key, auto_increment = false, column_type = "Text")]
     pub key: String,
     #[sea_orm(ignore, column_type = "Text", nullable)]
     pub value: Option<String>,

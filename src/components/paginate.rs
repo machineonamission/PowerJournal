@@ -1,6 +1,6 @@
+use crate::Route;
 use crate::components::pieces::Piece;
 use crate::database::entity::prelude::*;
-use crate::Route;
 use chrono::{DateTime, Utc};
 use dioxus::logger::tracing::log::log;
 use dioxus::prelude::*;
@@ -53,13 +53,14 @@ pub fn Paginate<E: EntityTrait, C: EntityLoaderTrait<E> + 'static>(
     // fires once when db becomes Some, stays cached after — total_pages() reads the cache
     let total_pages: Resource<i64> = use_resource(move || async move {
         let Some(db) = db_signal() else { return 0 };
-        loader.peek().clone()
+        loader
+            .peek()
+            .clone()
             .paginate(&db, 10)
             .num_pages()
             .await
             .unwrap_or(0) as i64
     });
-
 
     rsx! {
         if sentinels_active() && current_page() > 0 {

@@ -1,10 +1,9 @@
 pub mod entity;
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 
 use sea_orm::{Database, DatabaseConnection};
 #[cfg(not(target_arch = "wasm32"))]
 use std::{fs, path::PathBuf};
-
 
 // #[cfg(not(target_arch = "wasm32"))]
 fn get_db_url() -> Result<String> {
@@ -26,8 +25,7 @@ fn get_db_url() -> Result<String> {
 pub async fn init_db() -> Result<DatabaseConnection> {
     let db_url = get_db_url()?;
 
-    let db = Database::connect(&db_url)
-        .await?;
+    let db = Database::connect(&db_url).await?;
 
     db.get_schema_registry(&format!("{}::entity", module_path!()))
         .sync(&db)

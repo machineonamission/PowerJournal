@@ -9,15 +9,15 @@
 //! a common wrapper around all child routes.
 
 mod debugmenu;
-mod navbar;
-mod testpaginate;
-mod journalpaginate;
 pub mod importers;
 pub mod journal_list;
+mod journalpaginate;
+mod navbar;
+mod testpaginate;
 
+pub use debugmenu::DebugMenu;
+pub use importers::ImportersView;
 pub use journal_list::JournalList;
 pub use journalpaginate::JournalPaginate;
-pub use importers::ImportersView;
-pub use testpaginate::TestPaginate;
 pub use navbar::Navbar;
-pub use debugmenu::DebugMenu;
+pub use testpaginate::TestPaginate;

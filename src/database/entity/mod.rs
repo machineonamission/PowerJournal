@@ -3,7 +3,9 @@
 pub mod prelude;
 
 pub mod activities;
+pub mod blobs;
 pub mod entries;
+pub mod journal;
 pub mod piece;
 pub mod piece_0_text;
 pub mod piece_1_mood;
@@ -11,5 +13,3 @@ pub mod piece_2_blob;
 pub mod piece_3_location;
 pub mod piece_4_activities;
 pub mod settings;
-pub mod journal;
-pub mod blobs;

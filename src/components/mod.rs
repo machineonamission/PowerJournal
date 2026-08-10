@@ -2,12 +2,11 @@
 //! They can be used to defined common UI elements like buttons, forms, and modals. In this template, we define a Hero
 //! component and an Echo component for fullstack apps to be used in our app.
 
-pub mod entry;
-pub mod pieces;
-pub mod paginate;
-pub mod icon;
-pub mod font;
-pub mod progress;
 pub mod blobview;
+pub mod entry;
+pub mod font;
+pub mod icon;
 pub mod journal_list;
-
+pub mod paginate;
+pub mod pieces;
+pub mod progress;

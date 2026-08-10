@@ -1,3 +1,4 @@
+use crate::blob_utils::infer_mime_type;
 use crate::database::entity::prelude::*;
 use crate::importers::common::ImporterArgs;
 use anyhow::{Context, Result, anyhow};
@@ -12,7 +13,6 @@ use std::collections::HashMap;
 use std::fmt::Debug;
 use std::io::{Cursor, Read};
 use zip::ZipArchive;
-use crate::blob_utils::infer_mime_type;
 
 #[derive(Serialize, Deserialize, Debug)]
 struct Mood {
@@ -62,12 +62,9 @@ fn ms_to_datetime(ms: i64) -> Result<chrono::DateTime<Utc>> {
     chrono::DateTime::from_timestamp_millis(ms).context("epic datetime fail")
 }
 
-pub async fn import_daylio(
-    mut args: ImporterArgs<'_>,
-) -> Result<()> {
+pub async fn import_daylio(mut args: ImporterArgs<'_>) -> Result<()> {
     /// * `file`: file-like object that is a .daylio BACKUP.
     /// More > Backup & Restore > Advanced Options > Export
-
     let ImporterArgs {
         file,
         db,
@@ -172,7 +169,7 @@ pub async fn import_daylio(
     // main entry loop
     for (i, entry) in json.day_entries.iter().enumerate() {
         current_prog_signal.set(i as i64);
-        log(format!("Processing entry {:?}",  entry.id));
+        log(format!("Processing entry {:?}", entry.id));
         let mut master_entry = entries::ActiveModel::builder()
             .set_datetime(entry.datetime / 1000) // daylio does ms, i do s like a NORMAL PERSON
             .set_title(entry.note_title.clone())
@@ -242,11 +239,7 @@ pub async fn import_daylio(
                             piece_2_blob::ActiveModel::builder()
                                 // .set_data(buf)
                                 .set_mime_type(mt)
-                                .set_blob(
-                                    blobs::ActiveModel::builder()
-                                        .set_data(buf)
-                                )
-
+                                .set_blob(blobs::ActiveModel::builder().set_data(buf)),
                         )
                         .set_piece_type(2),
                 )
@@ -254,7 +247,6 @@ pub async fn import_daylio(
         }
         // we've prepped all the pieces, commit to transaction
         master_entry.insert(&txn).await?;
-
     }
     current_prog_signal.set(max_prog_signal());
     log_str("Committing database transaction...");

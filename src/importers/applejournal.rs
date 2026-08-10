@@ -21,6 +21,7 @@ use std::fmt::Debug;
 use std::fs;
 use std::io::{Cursor, Read, Seek};
 use std::path::PathBuf;
+use webp::Encoder;
 use zip::ZipArchive;
 
 fn selector(s: &str) -> Result<Selector> {
@@ -126,11 +127,13 @@ pub fn parse_date_to_unix_timestamp(date_str: &str) -> Result<i64> {
     Ok(local_datetime.timestamp())
 }
 
+fn decode_heic_to_rgba(buf: &[u8]) -> Result<RgbaImage> {
+    let decoded = DecoderConfig::new().decode(buf, PixelLayout::Rgba8)?;
+    RgbaImage::from_raw(decoded.width, decoded.height, decoded.data)
+        .context("decoder buffer size matches declared dimensions")
+}
 fn heic_to_png(buf: Vec<u8>) -> Result<Vec<u8>> {
-    let decoded = DecoderConfig::new().decode(&buf, PixelLayout::Rgba8)?;
-
-    let img = RgbaImage::from_raw(decoded.width, decoded.height, decoded.data)
-        .context("decoder buffer size matches declared dimensions")?;
+    let img = decode_heic_to_rgba(&buf)?;
 
     let mut png_bytes = Vec::new();
     img.write_to(&mut Cursor::new(&mut png_bytes), image::ImageFormat::Png)?;
@@ -138,26 +141,45 @@ fn heic_to_png(buf: Vec<u8>) -> Result<Vec<u8>> {
     Ok(png_bytes)
 }
 
-fn normalize_mov(buf: Vec<u8>) -> Result<Vec<u8>> {
-    todo!()
+fn heic_to_lossless_webp(buf: Vec<u8>) -> Result<Vec<u8>> {
+    let img = decode_heic_to_rgba(&buf)?;
+    Ok(Encoder::from_rgba(&img, img.width(), img.height())
+        .encode_lossless()
+        .to_vec())
 }
+
+fn heic_to_lossy_webp(buf: Vec<u8>, quality: f32) -> Result<Vec<u8>> {
+    let img = decode_heic_to_rgba(&buf)?;
+    Ok(Encoder::from_rgba(&img, img.width(), img.height())
+        .encode(quality)
+        .to_vec())
+}
+
+// fn normalize_mov(buf: Vec<u8>) -> Result<Vec<u8>> {
+//     todo!()
+// }
 
 // apple uses weird formats (eg heic, mov) that browsers (ie, dioxus) wont render. convert on import.
 fn normalize_apple_media(buf: Vec<u8>, mut log_signal: Signal<Vec<String>>) -> Result<Vec<u8>> {
     let mt = infer_mime_type(&buf);
-    let mut log_str = move |message: &str| {
-        log_signal.write().push(message.to_string())
-    };
+    let mut log_str = move |message: &str| log_signal.write().push(message.to_string());
 
     match mt {
+        // https://caniuse.com/heif
+        // as of writing, HEIC/HEIF is used by apple journal, and NOT supported by basically any
+        // non-safari browser (ie, dioxus renderers), so we convert
         "image/heic" | "image/heif"
         // not sure if these actually appear, but this cant hurt cause they wouldnt work anyways
         | "image/heic-sequence" | "image/heif-sequence" => {
             log_str("converting heic to png");
             heic_to_png(buf)
         },
+        // suprisingly, MOV + HEVC is actually fucking supported in my testing? leaving this here in
+        // case it's not as universal, though video encoding is something i hope i wont have to do
+        // https://caniuse.com/hevc
+        // https://github.com/Fyrd/caniuse/issues/6086
         // "video/quicktime" => {
-        //     log_str("converting mov to TODO");
+        //     log_str("converting mov");
         //     normalize_mov(buf)
         // },
         _ => Ok(buf)
