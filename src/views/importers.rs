@@ -118,23 +118,6 @@ pub fn ImportersView() -> Element {
 
     let db_signal = use_context::<Resource<DatabaseConnection>>();
 
-    // runs after every render where `log` changed
-    use_effect(move || {
-        log.read(); // subscribe to changes
-        spawn(async move {
-            // scroll to bottom if user is near bottom
-            let _ = document::eval(
-                r#"
-                let el = document.getElementById("log_pre");
-                if (el) {
-                    el.scrollTop = el.scrollHeight;
-                }
-            "#,
-            )
-            .await;
-        });
-    });
-
 
     // this looks stupid, but only updating the renderer "every so often" instead of EVERY UPDATE
     // saves TONS of ui processing and lets me spam logs how i want
@@ -151,8 +134,27 @@ pub fn ImportersView() -> Element {
             tokio::time::sleep(Duration::from_millis(50)).await;
             max_prog_render.set(max_prog());
             current_prog_render.set(current_prog());
-            log_render.write().append(&mut log.write());
+            if !log().is_empty() {
+                log_render.write().append(&mut log.write());
+            }
         }
+    });
+
+    // runs after every render where `log` changed
+    use_effect(move || {
+        log_render.read(); // subscribe to changes
+        spawn(async move {
+            // scroll to bottom if user is near bottom
+            let _ = document::eval(
+                r#"
+                let el = document.getElementById("log_pre");
+                if (el) {
+                    el.scrollTop = el.scrollHeight;
+                }
+            "#,
+            )
+                .await;
+        });
     });
 
     rsx! {

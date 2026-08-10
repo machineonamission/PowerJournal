@@ -273,6 +273,8 @@ pub async fn import_apple_journal(mut args: ImporterArgs<'_>) -> Result<()> {
     log_str("Calculating backup size...");
 
     let mut entries = Vec::<PathBuf>::new();
+    let (tx, mut rx) = tokio::sync::mpsc::unbounded_channel::<Result<(Vec<u8>, i64)>>();
+    let mut spawned = 0;
     for i in 0..masterzip.len() {
         // read file contents if it is an entry
         // inside block because getting a ZipFile object is a mutable borrow on masterzip,
@@ -299,7 +301,6 @@ pub async fn import_apple_journal(mut args: ImporterArgs<'_>) -> Result<()> {
     // max_prog_signal.set(entries.len() as i64);
 
     // stuff needed for parallel re-encoding later
-    let mut handles = Vec::new();
     let semaphore = Arc::new(Semaphore::new(std::thread::available_parallelism()?.get()));
 
     // for every file in the zip
@@ -461,25 +462,30 @@ pub async fn import_apple_journal(mut args: ImporterArgs<'_>) -> Result<()> {
             }
 
             // HEIC files don't render in dioxus
-            if needs_a_normalization(&buf) {
-                // re-encoding is heavy, do in thread and collect later
+            if needs_a_normalization(&buf) && codec != "HEIC" {
                 log(format!(
                     "Spawning re-encoding thread for asset {:?}",
                     &canon_path
                 ));
-
-                // easiest to clone and pass to each thread. i dont want to imagine the syntax for
-                // cross thread sharing over ONE VAR and also the borrow checker was pissed
                 let value = codec.clone();
                 let permit = semaphore.clone();
-                let handle = tokio::spawn(async move {
-                    let _permit = permit.acquire_owned().await?;
-                    let normalized =
-                        tokio::task::spawn_blocking(move || normalize_apple_media(buf, &value))
-                            .await??;
-                    Ok::<_, anyhow::Error>((inserted_id, normalized))
+                let tx = tx.clone();
+                spawned += 1;
+
+                spawn(async move {
+                    let result = async move {
+                        let owned_permit = permit.acquire_owned().await?;
+                        let normalized =
+                            tokio::task::spawn_blocking(move || normalize_apple_media(buf, &value))
+                                .await??;
+                        drop(owned_permit);
+                        *current_prog_signal.write() += 1;
+                        Ok((normalized, inserted_id))
+                    }
+                    .await;
+
+                    tx.send(result).unwrap(); // fire-and-forget from the caller's POV
                 });
-                handles.push(handle);
             } else {
                 // no reencoding, don't waste time spawning a thread, just insert now
                 insert_blob(&txn, inserted_id, buf).await?;
@@ -487,15 +493,18 @@ pub async fn import_apple_journal(mut args: ImporterArgs<'_>) -> Result<()> {
             }
         }
     }
-    if !handles.is_empty() {
-        let handles_size = handles.len();
-        log_str("Inserting re-encoded media into db...");
+    drop(tx);
 
-        for (i, r) in handles.into_iter().enumerate() {
-            let (entry_id, buf) = r.await??;
-            log(format!("Inserting re-encoded media {i}/{handles_size}..."));
-            insert_blob(&txn, entry_id, buf).await?;
-            *current_prog_signal.write() += 1;
+    if spawned > 0 {
+        log_str("Finalizing DB inserts...");
+        for i in 0..spawned {
+            if let Some(result) = rx.recv().await {
+                let (normalized, inserted_id) = result?; // bubbles up errors
+                log(format!(
+                    "Finalizing DB insert for asset {i}/{spawned}..."
+                ));
+                insert_blob(&txn, inserted_id, normalized).await?;
+            }
         }
     }
     current_prog_signal.set(max_prog_signal());
