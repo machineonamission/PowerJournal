@@ -4703,6 +4703,7 @@ dependencies = [
  "dioxus-primitives",
  "dioxus_google_font_embedder",
  "dirs",
+ "futures",
  "glam",
  "heic",
  "http",

@@ -4,7 +4,7 @@ version = "0.1.0"
 authors = ["Machine on a Mission <machineonamission@gmail.com>"]
 edition = "2024"
 license = "LGPL-3.0-or-later"
-description = "PowerJournal description"
+description = "PowerJournal"
 homepage = "https://github.com/machineonamission/powerjournal"
 repository = "https://github.com/machineonamission/powerjournal"
 readme = "README.md"
@@ -36,6 +36,7 @@ tokio = { version = "1.53.1", features = ["fs"] }  # literally just need async f
 dioxus-primitives = { git = "https://github.com/DioxusLabs/components" }  # helper for styled pre-made components
 dioxus_google_font_embedder = "1.2.0"
 webp = "0.3.1"
+futures = "0.3.33"
 
 [features]
 default = ["desktop"]

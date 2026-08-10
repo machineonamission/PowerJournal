@@ -14,13 +14,15 @@ use lightningcss::properties::Property;
 use lightningcss::stylesheet::{ParserOptions, StyleAttribute};
 use lightningcss::values::color::CssColor;
 use scraper::{Html, Selector};
-use sea_orm::TransactionTrait;
+use sea_orm::{DatabaseTransaction, TransactionTrait};
 use sea_orm::{ActiveModelTrait, DatabaseConnection};
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
 use std::fs;
 use std::io::{Cursor, Read, Seek};
 use std::path::PathBuf;
+use std::sync::Arc;
+use tokio::sync::Semaphore;
 use webp::Encoder;
 use zip::ZipArchive;
 
@@ -132,6 +134,7 @@ fn decode_heic_to_rgba(buf: &[u8]) -> Result<RgbaImage> {
     RgbaImage::from_raw(decoded.width, decoded.height, decoded.data)
         .context("decoder buffer size matches declared dimensions")
 }
+
 fn heic_to_png(buf: Vec<u8>) -> Result<Vec<u8>> {
     let img = decode_heic_to_rgba(&buf)?;
 
@@ -156,34 +159,60 @@ fn heic_to_lossy_webp(buf: Vec<u8>, quality: f32) -> Result<Vec<u8>> {
 }
 
 // fn normalize_mov(buf: Vec<u8>) -> Result<Vec<u8>> {
-//     todo!()
+//
 // }
 
-// apple uses weird formats (eg heic, mov) that browsers (ie, dioxus) wont render. convert on import.
-fn normalize_apple_media(buf: Vec<u8>, mut log_signal: Signal<Vec<String>>) -> Result<Vec<u8>> {
-    let mt = infer_mime_type(&buf);
-    let mut log_str = move |message: &str| log_signal.write().push(message.to_string());
+fn needs_a_normalization(buf: &Vec<u8>) -> bool {
+    let mt = infer_mime_type(buf);
+    matches!(
+        mt,
+        "image/heic" | "image/heif" | "image/heic-sequence" | "image/heif-sequence"
+    )
+}
 
-    match mt {
-        // https://caniuse.com/heif
-        // as of writing, HEIC/HEIF is used by apple journal, and NOT supported by basically any
-        // non-safari browser (ie, dioxus renderers), so we convert
-        "image/heic" | "image/heif"
-        // not sure if these actually appear, but this cant hurt cause they wouldnt work anyways
-        | "image/heic-sequence" | "image/heif-sequence" => {
-            log_str("converting heic to png");
+// apple uses weird formats (eg heic, mov) that browsers (ie, dioxus) wont render. convert on import.
+fn normalize_apple_media(buf: Vec<u8>, heic_codec: &str) -> Result<Vec<u8>> {
+    match heic_codec {
+        "Lossless WebP" => {
+            debug!("converting heic to lossless webp");
+            heic_to_lossless_webp(buf)
+        }
+        "Lossy WebP" => {
+            debug!("converting heic to lossy webp");
+            heic_to_lossy_webp(buf, 80.0)
+        }
+        "PNG" => {
+            debug!("converting heic to png");
             heic_to_png(buf)
-        },
-        // suprisingly, MOV + HEVC is actually fucking supported in my testing? leaving this here in
-        // case it's not as universal, though video encoding is something i hope i wont have to do
-        // https://caniuse.com/hevc
-        // https://github.com/Fyrd/caniuse/issues/6086
-        // "video/quicktime" => {
-        //     log_str("converting mov");
-        //     normalize_mov(buf)
-        // },
-        _ => Ok(buf)
+        }
+        "HEIC" | _ => {
+            // the no-op option lmao
+            Ok(buf)
+        }
     }
+    // suprisingly, MOV + HEVC is actually fucking supported in my testing? leaving this here in
+    // case it's not as universal, though video encoding is something i hope i wont have to do
+    // https://caniuse.com/hevc
+    // https://github.com/Fyrd/caniuse/issues/6086
+    // "video/quicktime" => {
+    //     log_str("converting mov");
+    //     normalize_mov(buf)
+    // },
+}
+
+async fn insert_blob(txn: &DatabaseTransaction, entry_id: i64, buf: Vec<u8>) -> Result<()> {
+    let mt = infer_mime_type(&buf);
+    piece::ActiveModel::builder()
+        .set_piece_2_blob(
+            piece_2_blob::ActiveModel::builder()
+                .set_mime_type(mt) // assume they're all images for now
+                .set_blob(blobs::ActiveModel::builder().set_data(buf)),
+        )
+        .set_piece_type(2)
+        .set_entry_id(entry_id)
+        .insert(txn)
+        .await?;
+    Ok(())
 }
 
 /// file must be file-like object representing an Apple Journal export
@@ -198,6 +227,7 @@ pub async fn import_apple_journal(mut args: ImporterArgs<'_>) -> Result<()> {
         mut log_signal,
         mut current_prog_signal,
         mut max_prog_signal,
+        importer_options,
     } = args;
 
     let mut log = move |message: String| {
@@ -209,6 +239,10 @@ pub async fn import_apple_journal(mut args: ImporterArgs<'_>) -> Result<()> {
     };
 
     log_str("Beginning import...");
+
+    let codec = importer_options
+        .heic_codec
+        .unwrap_or("Lossless WebP".into());
 
     // parse zip
     let cursor = Cursor::new(file);
@@ -253,6 +287,10 @@ pub async fn import_apple_journal(mut args: ImporterArgs<'_>) -> Result<()> {
         }
     }
     max_prog_signal.set(entries.len() as i64);
+
+    // stuff needed for parallel re-encoding later
+    let mut handles = Vec::new();
+    let semaphore = Arc::new(Semaphore::new(std::thread::available_parallelism()?.get()));
 
     // for every file in the zip
     for i in 0..masterzip.len() {
@@ -309,52 +347,6 @@ pub async fn import_apple_journal(mut args: ImporterArgs<'_>) -> Result<()> {
 
         // grid is where apple journal stores "assets", basically pieces for us
         let grid = document.select(&assets_s).next().context("grid fail")?;
-
-        // handle blob assets (img, video, audio)
-        let mut asset_srcs: Vec<&str> = vec![];
-
-        // because its html, photos are img and video/audio is source
-
-        // get images from img
-        for element in grid.select(&photo_s) {
-            let img = element.select(&img).next().context("img fail")?;
-            let src = img.value().attr("src").context("src fail")?;
-            asset_srcs.push(src);
-        }
-
-        // get media from video/audio
-        for element in grid.select(&video_s) {
-            let source = element.select(&source).next().context("source fail")?;
-            let src = source.attr("src").context("src fail")?;
-            asset_srcs.push(src);
-        }
-
-        // for each asset, get the blob data from the zip and add it to the entry
-        for src in asset_srcs {
-            let path = format!("AppleJournalEntries/Entries/{src}");
-            let canon_path = path_clean::clean(path);
-            log(format!("Importing asset {:?}", &canon_path));
-            let mut buf: Vec<u8> = Vec::new();
-
-            {
-                let mut file = masterzip.by_path(canon_path)?;
-                file.read_to_end(&mut buf)?;
-            }
-
-            buf = normalize_apple_media(buf, log_signal)?;
-
-            let mt = infer_mime_type(&buf);
-            // add piece with blob
-            master_entry = master_entry.add_piece(
-                piece::ActiveModel::builder()
-                    .set_piece_2_blob(
-                        piece_2_blob::ActiveModel::builder()
-                            .set_mime_type(mt) // assume they're all images for now
-                            .set_blob(blobs::ActiveModel::builder().set_data(buf)),
-                    )
-                    .set_piece_type(2),
-            )
-        }
 
         // mood/"state of mind"
         for element in grid.select(&som_s) {
@@ -424,9 +416,77 @@ pub async fn import_apple_journal(mut args: ImporterArgs<'_>) -> Result<()> {
             }
         }
         // log_str("Committing to database...");
-        master_entry.insert(&txn).await?;
+        let inserted_entry = master_entry.insert(&txn).await?;
+
+        let inserted_id = inserted_entry.id;
+
+        // handle blob assets (img, video, audio)
+        let mut asset_srcs: Vec<&str> = vec![];
+
+        // because its html, photos are img and video/audio is source
+
+        // get images from img
+        for element in grid.select(&photo_s) {
+            let img = element.select(&img).next().context("img fail")?;
+            let src = img.value().attr("src").context("src fail")?;
+            asset_srcs.push(src);
+        }
+
+        // get media from video/audio
+        for element in grid.select(&video_s) {
+            let source = element.select(&source).next().context("source fail")?;
+            let src = source.attr("src").context("src fail")?;
+            asset_srcs.push(src);
+        }
+        // for each asset, get the blob data from the zip and add it to the entry
+        for src in asset_srcs {
+            let path = format!("AppleJournalEntries/Entries/{src}");
+            let canon_path = path_clean::clean(path);
+            log(format!("Importing asset {:?}", &canon_path));
+            let mut buf: Vec<u8> = Vec::new();
+
+            {
+                let mut file = masterzip.by_path(&canon_path)?;
+                file.read_to_end(&mut buf)?;
+            }
+
+            // HEIC files don't render in dioxus
+            if needs_a_normalization(&buf) {
+                // re-encoding is heavy, do in thread and collect later
+                log(format!("Spawning re-encoding thread for asset {:?}", &canon_path));
+
+                // easiest to clone and pass to each thread. i dont want to imagine the syntax for
+                // cross thread sharing over ONE VAR and also the borrow checker was pissed
+                let value = codec.clone();
+                let permit = semaphore.clone();
+                let handle = tokio::spawn(async move {
+                    let _permit = permit.acquire_owned().await?;
+                    let normalized =
+                        tokio::task::spawn_blocking(move || {
+                            normalize_apple_media(buf, &value)
+                        })
+                            .await??;
+                    Ok::<_, anyhow::Error>((inserted_id, normalized))
+                });
+                handles.push(handle);
+            } else {
+                // no reencoding, don't waste time spawning a thread, just insert now
+                insert_blob(&txn, inserted_id, buf).await?;
+            }
+        }
     }
     current_prog_signal.set(max_prog_signal());
+    if !handles.is_empty() {
+        let handles_size = handles.len();
+        log_str("Inserting re-encoded media into db...");
+
+        for (i, r) in handles.into_iter().enumerate() {
+            let (entry_id, buf) = r.await??;
+            log(format!("Inserting re-encoded media {i}/{handles_size}..."));
+            insert_blob(&txn, entry_id, buf).await?;
+        }
+    }
+
     log_str("Committing database transaction...");
     txn.commit().await?;
     log_str("Finished!");

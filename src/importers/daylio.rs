@@ -71,6 +71,7 @@ pub async fn import_daylio(mut args: ImporterArgs<'_>) -> Result<()> {
         mut log_signal,
         mut current_prog_signal,
         mut max_prog_signal,
+        importer_options,
     } = args;
 
     let mut log = move |message: String| {
