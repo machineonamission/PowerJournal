@@ -7,7 +7,7 @@ use dioxus_google_font_embedder::{asset_url, embed_google_font};
 use sea_orm::DatabaseConnection;
 use views::*;
 use crate::blob_asset::register_blob_asset;
-use crate::components::font::AHLFont;
+use crate::components::font::FontStylesheets;
 use crate::components::icon::IconSheet;
 use crate::database::init_db;
 
@@ -23,7 +23,7 @@ pub mod blob_utils;
 enum Route {
     #[layout(Navbar)]
         #[route("/")]
-        DebugMenu {},        
+        DebugMenu {},
         #[route("/import")]
         ImportersView {},
         #[route("/journal/:id")]
@@ -34,7 +34,7 @@ enum Route {
         JournalList {},
 }
 
-const FAVICON: Asset = asset!("/assets/favicon.ico");
+const FAVICON: Asset = asset!("/assets/logo/logo.svg");
 
 fn main() {
     dioxus::launch(App);
@@ -63,7 +63,7 @@ fn App() -> Element {
     rsx! {
         document::Link { rel: "icon", href: FAVICON }
         Stylesheet { href: asset_url!("https://cdn.jsdelivr.net/npm/bootstrap@latest/dist/css/bootstrap.min.css") }
-        AHLFont {}
+        FontStylesheets {}
         IconSheet {}
         Router::<Route> {}
     }

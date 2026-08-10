@@ -9,7 +9,19 @@ pub fn DebugMenu() -> Element {
     let db_signal = use_context::<Resource<DatabaseConnection>>();
     rsx! {
         h1 {
-            "PowerJournal indev debug menu"
+            img {
+                src: asset!("/assets/logo/logo.svg"),
+                display: "inline-block",
+                // can't do width: shorthand cause its ambiguous with html width attr, so this is workaround
+                style: "width: 1em; height: 1em;",
+                vertical_align: "-0.125em",
+                object_fit: "contain",
+            }
+            span {
+                font_weight: "900",
+                font_family: "var(--display-font)",
+                " PowerJournal"
+            }
         }
         div {
             display: "flex",

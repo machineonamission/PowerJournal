@@ -9,6 +9,25 @@ title = "PowerJournal"
 [bundle]
 identifier = "me.machineonamission.powerjournal"
 publisher = "Machine on a Mission"
+icon = [
+    "assets/logo/converted/logo.icns",
+    "assets/logo/converted/logo.ico",
+    "assets/logo/converted/logo.iconset/icon_16x16.png",
+    "assets/logo/converted/logo.iconset/icon_16x16@2x.png",
+    "assets/logo/converted/logo.iconset/icon_32x32.png",
+    "assets/logo/converted/logo.iconset/icon_32x32@2x.png",
+    "assets/logo/converted/logo.iconset/icon_64x64.png",
+    "assets/logo/converted/logo.iconset/icon_64x64@2x.png",
+    "assets/logo/converted/logo.iconset/icon_128x128.png",
+    "assets/logo/converted/logo.iconset/icon_128x128@2x.png",
+    "assets/logo/converted/logo.iconset/icon_256x256.png",
+    "assets/logo/converted/logo.iconset/icon_256x256@2x.png",
+    "assets/logo/converted/logo.iconset/icon_512x512.png",
+    "assets/logo/converted/logo.iconset/icon_512x512@2x.png",
+    "assets/logo/converted/logo.iconset/icon_1024x1024.png",
+]
+
+# Two caveats
 
 [bundle.windows]
 webview_install_mode = { EmbedBootstrapper = { silent = true } }
