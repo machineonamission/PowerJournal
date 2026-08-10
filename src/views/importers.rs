@@ -7,6 +7,7 @@ use bytes::Bytes;
 use dioxus::prelude::*;
 use sea_orm::DatabaseConnection;
 use std::pin::Pin;
+use std::time::Duration;
 
 // so the Bytes object just HAPPENS to be what Dioxus file uploads are. so fucking, whatever. its a fine object for this.
 type ImportFuture<'a> = Pin<Box<dyn Future<Output = anyhow::Result<()>> + 'a>>;
@@ -134,6 +135,26 @@ pub fn ImportersView() -> Element {
         });
     });
 
+
+    // this looks stupid, but only updating the renderer "every so often" instead of EVERY UPDATE
+    // saves TONS of ui processing and lets me spam logs how i want
+    let mut log_render = use_signal(Vec::<String>::new);
+    let mut max_prog_render = use_signal(|| 0i64);
+    let mut current_prog_render = use_signal(|| 0i64);
+    let mut log_visible = use_signal(|| false);
+
+    use_future(move || async move {
+        loop {
+            // yes "once every 50 ms" is arbitrary, but without this whole loop it's the equivelant
+            // of like 1ms or some shit like its way too fast, and i cba to make it sync to frames
+            // or something, this is fine
+            tokio::time::sleep(Duration::from_millis(50)).await;
+            max_prog_render.set(max_prog());
+            current_prog_render.set(current_prog());
+            log_render.write().append(&mut log.write());
+        }
+    });
+
     rsx! {
         div {
             display: "flex",
@@ -195,6 +216,7 @@ pub fn ImportersView() -> Element {
                                     max_prog_signal: max_prog,
                                     importer_options: importer_options(),
                                 };
+                                log_visible.set(true);
                                 selected.function.call((args,)).await.unwrap();
                             },
                             "Import"
@@ -204,10 +226,10 @@ pub fn ImportersView() -> Element {
                 // show the docs for the selected importer
             }
             // TODO: scroll to bottom
-            if !log().is_empty() {
+            if log_visible() {
                 Progress {
-                    max: max_prog,
-                    current: current_prog,
+                    max: max_prog_render,
+                    current: current_prog_render,
                 }
                 h2 {"Log:"}
                 pre {
@@ -215,7 +237,7 @@ pub fn ImportersView() -> Element {
                     flex_grow: 1,
                     overflow: "scroll",
                     background: "black",
-                    for line in log() {
+                    for line in log_render() {
                         code {
                             "{line}\n"
                         }

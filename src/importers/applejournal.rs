@@ -14,8 +14,8 @@ use lightningcss::properties::Property;
 use lightningcss::stylesheet::{ParserOptions, StyleAttribute};
 use lightningcss::values::color::CssColor;
 use scraper::{Html, Selector};
-use sea_orm::{DatabaseTransaction, TransactionTrait};
 use sea_orm::{ActiveModelTrait, DatabaseConnection};
+use sea_orm::{DatabaseTransaction, TransactionTrait};
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
 use std::fs;
@@ -280,13 +280,23 @@ pub async fn import_apple_journal(mut args: ImporterArgs<'_>) -> Result<()> {
         {
             let mut file = masterzip.by_index(i)?;
             let path = file.enclosed_name().context("zip enclosed name error")?;
+
+            // count ESTIMATE for amount of work to do
+            if (path.starts_with("AppleJournalEntries/Entries")
+                || (path.starts_with("AppleJournalEntries/Resources")
+                    && !path.extension().map(|ext| ext == "json").unwrap_or(false)))
+                && !file.is_dir()
+            {
+                *max_prog_signal.write() += 1;
+            }
+
             if !path.starts_with("AppleJournalEntries/Entries") || file.is_dir() {
                 continue;
             }
             entries.push(path)
         }
     }
-    max_prog_signal.set(entries.len() as i64);
+    // max_prog_signal.set(entries.len() as i64);
 
     // stuff needed for parallel re-encoding later
     let mut handles = Vec::new();
@@ -305,7 +315,6 @@ pub async fn import_apple_journal(mut args: ImporterArgs<'_>) -> Result<()> {
                 continue;
             }
             log(format!("Processing entry {:?}", &path));
-            *current_prog_signal.write() += 1;
             file.read_to_string(&mut buf)?;
         }
 
@@ -417,6 +426,7 @@ pub async fn import_apple_journal(mut args: ImporterArgs<'_>) -> Result<()> {
         }
         // log_str("Committing to database...");
         let inserted_entry = master_entry.insert(&txn).await?;
+        *current_prog_signal.write() += 1;
 
         let inserted_id = inserted_entry.id;
 
@@ -453,7 +463,10 @@ pub async fn import_apple_journal(mut args: ImporterArgs<'_>) -> Result<()> {
             // HEIC files don't render in dioxus
             if needs_a_normalization(&buf) {
                 // re-encoding is heavy, do in thread and collect later
-                log(format!("Spawning re-encoding thread for asset {:?}", &canon_path));
+                log(format!(
+                    "Spawning re-encoding thread for asset {:?}",
+                    &canon_path
+                ));
 
                 // easiest to clone and pass to each thread. i dont want to imagine the syntax for
                 // cross thread sharing over ONE VAR and also the borrow checker was pissed
@@ -462,9 +475,7 @@ pub async fn import_apple_journal(mut args: ImporterArgs<'_>) -> Result<()> {
                 let handle = tokio::spawn(async move {
                     let _permit = permit.acquire_owned().await?;
                     let normalized =
-                        tokio::task::spawn_blocking(move || {
-                            normalize_apple_media(buf, &value)
-                        })
+                        tokio::task::spawn_blocking(move || normalize_apple_media(buf, &value))
                             .await??;
                     Ok::<_, anyhow::Error>((inserted_id, normalized))
                 });
@@ -472,10 +483,10 @@ pub async fn import_apple_journal(mut args: ImporterArgs<'_>) -> Result<()> {
             } else {
                 // no reencoding, don't waste time spawning a thread, just insert now
                 insert_blob(&txn, inserted_id, buf).await?;
+                *current_prog_signal.write() += 1;
             }
         }
     }
-    current_prog_signal.set(max_prog_signal());
     if !handles.is_empty() {
         let handles_size = handles.len();
         log_str("Inserting re-encoded media into db...");
@@ -484,9 +495,10 @@ pub async fn import_apple_journal(mut args: ImporterArgs<'_>) -> Result<()> {
             let (entry_id, buf) = r.await??;
             log(format!("Inserting re-encoded media {i}/{handles_size}..."));
             insert_blob(&txn, entry_id, buf).await?;
+            *current_prog_signal.write() += 1;
         }
     }
-
+    current_prog_signal.set(max_prog_signal());
     log_str("Committing database transaction...");
     txn.commit().await?;
     log_str("Finished!");
