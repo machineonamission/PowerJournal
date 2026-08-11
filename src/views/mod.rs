@@ -8,16 +8,18 @@
 //! The [`Navbar`] component will be rendered on all pages of our app since every page is under the layout. The layout defines
 //! a common wrapper around all child routes.
 
-mod debugmenu;
+pub mod debugmenu;
 pub mod importers;
 pub mod journal_list;
-mod journalpaginate;
-mod navbar;
-mod testpaginate;
+pub mod journalpaginate;
+pub mod navbar;
+pub mod new_entry;
+pub mod settings;
 
-pub use debugmenu::DebugMenu;
-pub use importers::ImportersView;
-pub use journal_list::JournalList;
-pub use journalpaginate::JournalPaginate;
-pub use navbar::Navbar;
-pub use testpaginate::TestPaginate;
+pub use debugmenu::*;
+pub use importers::*;
+pub use journal_list::*;
+pub use journalpaginate::*;
+pub use navbar::*;
+pub use new_entry::*;
+pub use settings::*;

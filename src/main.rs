@@ -24,15 +24,19 @@ pub mod text;
 enum Route {
     #[layout(Navbar)]
         #[route("/")]
+        JournalPaginateAll {},
+        #[route("/debug")]
         DebugMenu {},
         #[route("/import")]
         ImportersView {},
         #[route("/journal/:id")]
         JournalPaginate { id: i64 },
-        #[route("/testpaginate")]
-        TestPaginate {},
         #[route("/journals")]
         JournalList {},
+        #[route("/new")]
+        NewEntry {},
+        #[route("/settings")]
+        Settings {},
 }
 
 const FAVICON: Asset = asset!("/assets/logo/logo.svg");

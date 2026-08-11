@@ -32,8 +32,8 @@ pub fn DebugMenu() -> Element {
                 "open journal 1"
             }
             Link {
-                to: Route::TestPaginate {},
-                "open test paginate"
+                to: Route::JournalPaginateAll {},
+                "open all journals"
             }
             Link {
                 to: Route::ImportersView {},

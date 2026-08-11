@@ -34,9 +34,9 @@ bytes = "1.12.1" # dioxus internal vec u8 wrapper, fuck off
 open = "5.4.1"  # cross-platform open file/folder/url in default application
 tokio = { version = "1.53.1", features = ["fs"] }  # literally just need async fs funcs
 dioxus-primitives = { git = "https://github.com/DioxusLabs/components" }  # helper for styled pre-made components
-dioxus_google_font_embedder = "1.2.0"
-webp = "0.3.1"
-ammonia = "4.1.4"
+dioxus_google_font_embedder = "1.2.0"  # embeds fonts/css at compile time
+webp = "0.3.1"  # webp conversion
+ammonia = "4.1.4"  # html sanitizier
 
 [features]
 default = ["desktop"]

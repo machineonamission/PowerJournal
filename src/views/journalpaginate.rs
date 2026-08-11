@@ -11,11 +11,13 @@ use sea_orm::{
 };
 
 #[component]
-pub fn JournalPaginate(id: i64) -> Element {
+fn JournalPaginateBase(id: Option<i64>) -> Element {
     let cursor = use_signal(|| {
-        entries::Entity::load()
-            .filter(entries::Column::JournalId.eq(id))
-            .with((piece::Entity, piece_0_text::Entity))
+        let mut c = entries::Entity::load();
+        if let Some(id) = id {
+            c = c.filter(entries::Column::JournalId.eq(id))
+        }
+        c.with((piece::Entity, piece_0_text::Entity))
             .with((piece::Entity, piece_1_mood::Entity))
             .with((piece::Entity, piece_2_blob::Entity))
             .with((piece::Entity, piece_3_location::Entity))
@@ -28,5 +30,19 @@ pub fn JournalPaginate(id: i64) -> Element {
             loader: cursor,
             render: |model| rsx! { Entry { entry: model } }
         }
+    }
+}
+
+#[component]
+pub fn JournalPaginate(id: i64) -> Element {
+    rsx! {
+        JournalPaginateBase { id: Some(id)}
+    }
+}
+
+#[component]
+pub fn JournalPaginateAll() -> Element {
+    rsx! {
+        JournalPaginateBase { id: None}
     }
 }

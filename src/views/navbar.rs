@@ -1,25 +1,53 @@
 use crate::Route;
+use crate::components::icon::Icon;
 use dioxus::prelude::*;
 
-/// The Navbar component that will be rendered on all pages of our app since every page is under the layout.
-///
-///
-/// This layout component wraps the UI of [Route::Home] and [Route::Blog] in a common navbar. The contents of the Home and Blog
-/// routes will be rendered under the outlet inside this component
+
+#[component]
+pub fn NavItem(to: Route, icon: String) -> Element {
+    rsx! {
+        Link {
+            class: "nav-link active",
+            to: to,
+            Icon { "{icon}" }
+        }
+    }
+}
+
 #[component]
 pub fn Navbar() -> Element {
     rsx! {
-        // document::Link { rel: "stylesheet", href: NAVBAR_CSS }
-
-        div {
-            id: "navbar",
-        }
-
-        // The `Outlet` component is used to render the next component inside the layout. In this case, it will render either
-        // the [`Home`] or [`Blog`] component depending on the current route.
         div {
             margin: "1rem",
             Outlet::<Route> {}
+        }
+        nav {
+            class: "nav nav-justified",
+            position: "fixed",
+            bottom: 0,
+            left: 0,
+            right: 0,
+
+            NavItem {
+                to: Route::JournalPaginateAll {},
+                icon: "home",
+            }
+            NavItem {
+                to: Route::JournalList {},
+                icon: "newsstand",
+            }
+            NavItem {
+                to: Route::NewEntry {},
+                icon: "add",
+            }
+            NavItem {
+                to: Route::DebugMenu {},
+                icon: "bug_report",
+            }
+            NavItem {
+                to: Route::Settings {},
+                icon: "settings",
+            }
         }
     }
 }
