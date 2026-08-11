@@ -13,6 +13,7 @@ use std::collections::HashMap;
 use std::fmt::Debug;
 use std::io::{Cursor, Read};
 use zip::ZipArchive;
+use crate::text::{sanitize_html};
 
 #[derive(Serialize, Deserialize, Debug)]
 struct Mood {
@@ -195,7 +196,7 @@ pub async fn import_daylio(mut args: ImporterArgs<'_>) -> Result<()> {
                     .set_piece_0_text(
                         piece_0_text::ActiveModel::builder()
                             .set_title(entry.note_title.clone())
-                            .set_content(note),
+                            .set_content(sanitize_html(note)?),
                     )
                     .set_piece_type(0),
             );

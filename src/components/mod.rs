@@ -10,4 +10,3 @@ pub mod journal_list;
 pub mod paginate;
 pub mod pieces;
 pub mod progress;
-pub mod markdown;

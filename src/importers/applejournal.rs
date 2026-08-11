@@ -3,6 +3,7 @@ use crate::blob_utils::infer_mime_type;
 use crate::database::entity::prelude::*;
 use crate::database::init_db;
 use crate::importers::common::ImporterArgs;
+use crate::text;
 use anyhow::{Context, Result, anyhow};
 use bytes::Bytes;
 use chrono::{Local, NaiveDate, TimeZone};
@@ -215,6 +216,12 @@ async fn insert_blob(txn: &DatabaseTransaction, entry_id: i64, buf: Vec<u8>) -> 
     Ok(())
 }
 
+pub fn sanitize_apple_html(html: &str) -> Result<String> {
+    // placeholder
+    // TODO fix apple specific html
+    text::sanitize_html(html)
+}
+
 /// file must be file-like object representing an Apple Journal export
 /// - 3 dots in the top right of the Journal app > Export
 /// - once it's exported to a folder, open the files app
@@ -347,7 +354,7 @@ pub async fn import_apple_journal(mut args: ImporterArgs<'_>) -> Result<()> {
             master_entry = master_entry.add_piece(
                 piece::ActiveModel::builder()
                     .set_piece_0_text(
-                        piece_0_text::ActiveModel::builder().set_content(body_contents),
+                        piece_0_text::ActiveModel::builder().set_content(sanitize_apple_html(&body_contents)?),
                     )
                     .set_piece_type(0),
             );
@@ -520,3 +527,4 @@ pub async fn import_apple_journal(mut args: ImporterArgs<'_>) -> Result<()> {
 //         .await
 //         .unwrap()
 // }
+

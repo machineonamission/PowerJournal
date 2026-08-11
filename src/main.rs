@@ -17,6 +17,7 @@ mod components;
 mod database;
 mod importers;
 mod views;
+pub mod text;
 
 #[derive(Debug, Clone, Routable, PartialEq)]
 #[rustfmt::skip]
