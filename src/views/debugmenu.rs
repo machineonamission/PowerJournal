@@ -23,6 +23,9 @@ pub fn DebugMenu() -> Element {
                 " PowerJournal"
             }
         }
+        h1 {
+            "Debug Menu"
+        }
         div {
             display: "flex",
             flex_direction: "column",

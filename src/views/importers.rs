@@ -20,6 +20,14 @@ pub struct Importer {
     pub docs: Callback<(), Element>,
 }
 
+// like i think using components and not this weird inline list is the correct pattern but
+// it works for now?
+
+// #[component]
+// pub fn Importer(name: &'static str, function: ImportFn, children: Element) -> Element {
+//     
+// }
+
 /// The Home page component that will be rendered when the current route is `[Route::Home]`
 #[component]
 pub fn ImportersView() -> Element {
@@ -227,7 +235,6 @@ pub fn ImportersView() -> Element {
                 }
                 // show the docs for the selected importer
             }
-            // TODO: scroll to bottom
             if log_visible() {
                 Progress {
                     max: max_prog_render,
