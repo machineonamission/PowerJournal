@@ -18,8 +18,10 @@ erDiagram
         float energy
     }
     PIECE_2_BLOB {
-        int type
-        blob data
+        text mime-type
+    }
+    BLOBS {
+        blob blob
     }
     PIECE_3_LOCATION {
         float lat
@@ -47,6 +49,7 @@ erDiagram
     O ||--|| PIECE_0_TEXT : is
     O ||--|| PIECE_1_MOOD : is
     O ||--|| PIECE_2_BLOB : is
+    PIECE_2_BLOB ||--|| BLOBS : blob
     O ||--|| PIECE_3_LOCATION : is
     O ||--|{ PIECE_4_ACTIVITIES : "represents activity entries"
     ACTIVITIES ||--|{ PIECE_4_ACTIVITIES : "is this activity"
