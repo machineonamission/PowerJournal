@@ -1,3 +1,4 @@
+use crate::Route;
 use crate::components::icon::Icon;
 use crate::database::entity::prelude::*;
 use dioxus::prelude::*;
@@ -34,6 +35,7 @@ pub fn PieceEditor(mut piece: Store<piece::ActiveModelEx>) -> Element {
 #[component]
 pub fn NewEntry() -> Element {
     let db_signal = use_context::<Resource<DatabaseConnection>>();
+    let mut navigator = use_navigator();
     let journals: Resource<Vec<journal::ModelEx>> = use_resource(move || async move {
         let Some(db) = db_signal() else { return vec![] };
         journal::Entity::load().all(&db).await.unwrap_or_default()
@@ -86,15 +88,20 @@ pub fn NewEntry() -> Element {
             "Add Piece"
         }
         br{}
-                button {
+        button {
             r#type: "button",
             class: "btn btn-success",
             onclick: move |_| async move {
+                let journal_id = match entry().journal_id {
+                    sea_orm::ActiveValue::Set(id) => id,
+                    _ => 0,
+                };
                 for piece in pieces.iter() {
                     entry.set(entry().add_piece(piece()))
                 }
                 entry.set(entry().set_datetime(chrono::Utc::now().timestamp()));
                 entry().insert(&db_signal().unwrap()).await.expect("TODO: panic message");
+                navigator.push(Route::JournalPaginate { id: journal_id });
             },
             Icon { "add" }
             "Save Entry"
