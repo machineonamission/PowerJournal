@@ -1,12 +1,13 @@
+use crate::components::icon::Icon;
 use crate::database::entity::prelude::*;
 use dioxus::prelude::*;
 use sea_orm::DatabaseConnection;
-use crate::components::icon::Icon;
 
 #[component]
 pub fn Piece0TextEditor(mut piece: Store<piece::ActiveModelEx>) -> Element {
     rsx! {
         textarea {
+            class: "form-control",
             oninput: move |e| {
                 let val = e.value();
                 piece.write().piece_0_text.as_mut().unwrap().content = sea_orm::ActiveValue::Set(val);
@@ -41,10 +42,16 @@ pub fn NewEntry() -> Element {
     let mut entry = use_signal(entries::ActiveModel::builder);
     // main editor store, each piece as a signal
     let mut pieces = use_store(Vec::<piece::ActiveModelEx>::new);
-    // let mut first: Write<Piece, _> = entry_pieces.map_mut(|v| &mut v[0]);
+
     use_effect(move || {
-        dbg!(&pieces());
+        if let Some(journals) = journals()
+            && let Some(first_journal) = journals.first()
+            && entry().journal_id.is_not_set()
+        {
+            entry.set(entry().set_journal_id(first_journal.id));
+        }
     });
+
     rsx! {
         h1 {"New Entry"}
         div {
@@ -52,6 +59,10 @@ pub fn NewEntry() -> Element {
             select {
                 name: "journal",
                 class: "form-select",
+                onchange: move |e| {
+                    let val = e.value();
+                    entry.set(entry().set_journal_id(val.parse::<i64>().unwrap_or_default()));
+                },
                 if let Some(journals) = journals() {
                     for journal in journals {
                         option {
@@ -71,8 +82,22 @@ pub fn NewEntry() -> Element {
             onclick: move |_| async move {
                 pieces.write().push(piece::ActiveModel::builder().set_piece_type(0).set_piece_0_text(piece_0_text::ActiveModel::builder()));
             },
-            Icon { icon: "plus" }
+            Icon { "add" }
             "Add Piece"
+        }
+        br{}
+                button {
+            r#type: "button",
+            class: "btn btn-success",
+            onclick: move |_| async move {
+                for piece in pieces.iter() {
+                    entry.set(entry().add_piece(piece()))
+                }
+                entry.set(entry().set_datetime(chrono::Utc::now().timestamp()));
+                entry().insert(&db_signal().unwrap()).await.expect("TODO: panic message");
+            },
+            Icon { "add" }
+            "Save Entry"
         }
     }
 }
