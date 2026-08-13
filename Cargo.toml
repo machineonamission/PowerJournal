@@ -13,7 +13,7 @@ readme = "README.md"
 [dependencies]
 anyhow = { version = "1.0.104", features = ["std", "backtrace"] }  # error handling
 dioxus = { version = "0.7.10", features = ["router",] }  # ui framework
-sea-orm = { version = "2.0.0", features = ["sqlx-sqlite", "runtime-tokio-native-tls", "macros",
+sea-orm = { path="../sea-orm", features = ["sqlx-sqlite", "runtime-tokio-native-tls", "macros",
     "with-chrono", "with-json", "schema-sync", "entity-registry"]}  # db/orm
 zip = "8.6.0"  # backups are often zip files
 dirs = "6.0.0"  # get data dir
@@ -33,7 +33,7 @@ infer = "0.22.0"# infers mime type
 bytes = "1.12.1" # dioxus internal vec u8 wrapper, fuck off
 open = "5.4.1"  # cross-platform open file/folder/url in default application
 tokio = { version = "1.53.1", features = ["fs"] }  # literally just need async fs funcs
-dioxus-primitives = { git = "https://github.com/DioxusLabs/components", version = "0.0.1", default-features = false }  # helper for styled pre-made components
+#dioxus-primitives = { git = "https://github.com/DioxusLabs/components", version = "0.0.1", default-features = false }  # helper for styled pre-made components
 dioxus_google_font_embedder = "1.2.0"  # embeds fonts/css at compile time
 webp = "0.3.1"  # webp conversion
 ammonia = "4.1.4"  # html sanitizier
