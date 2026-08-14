@@ -4,7 +4,7 @@ use crate::database::entity::entries::{ActiveModelEx, ActiveModelExStoreExt};
 use crate::database::entity::piece::{ActiveModelExStoreExt as OtherActiveModelExStoreExt, Entity};
 use crate::database::entity::prelude::*;
 use dioxus::prelude::*;
-use sea_orm::{ActiveHasMany, ActiveHasManyStoreExt, ActiveHasManyStoreTransposed, ActiveHasOneStoreExt, DatabaseConnection};
+use sea_orm::{ActiveHasMany, ActiveHasManyStoreExt, ActiveHasManyStoreTransposed, ActiveHasOneStoreExt, DatabaseConnection, EntityTrait};
 
 #[component]
 pub fn Piece0TextEditor(mut piece: Store<piece::ActiveModelEx>) -> Element {
@@ -41,6 +41,13 @@ pub fn PieceEditor(mut piece: Store<piece::ActiveModelEx>) -> Element {
             // 4 => rsx! { Piece4ActivityEditor { piece } },
             _ => rsx! {},
         }
+    }
+}
+
+#[store]
+impl<Lens, E: EntityTrait> Store<ActiveHasMany<E>, Lens> {
+    fn iter_children(&mut self) {
+        // TODO
     }
 }
 
