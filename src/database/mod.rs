@@ -26,9 +26,7 @@ async fn ensure_default_journal(db: &DatabaseConnection) -> Result<()> {
     use entity::journal;
     use sea_orm::EntityTrait;
 
-    let default_journal = journal::Entity::find()
-        .one(db)
-        .await?;
+    let default_journal = journal::Entity::find().one(db).await?;
 
     if default_journal.is_none() {
         let new_journal = journal::ActiveModel {

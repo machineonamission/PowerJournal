@@ -16,8 +16,9 @@ pub mod blob_utils;
 mod components;
 mod database;
 mod importers;
-mod views;
+mod store_lenses;
 pub mod text;
+mod views;
 
 #[derive(Debug, Clone, Routable, PartialEq)]
 #[rustfmt::skip]

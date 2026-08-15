@@ -1,6 +1,7 @@
 use crate::blob_utils::infer_mime_type;
 use crate::database::entity::prelude::*;
 use crate::importers::common::ImporterArgs;
+use crate::text::sanitize_html;
 use anyhow::{Context, Result, anyhow};
 use base64::Engine;
 use base64::prelude::BASE64_STANDARD;
@@ -13,7 +14,6 @@ use std::collections::HashMap;
 use std::fmt::Debug;
 use std::io::{Cursor, Read};
 use zip::ZipArchive;
-use crate::text::{sanitize_html};
 
 #[derive(Serialize, Deserialize, Debug)]
 struct Mood {

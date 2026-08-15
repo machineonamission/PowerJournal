@@ -1,29 +1,23 @@
 use crate::Route;
 use crate::components::icon::Icon;
-use crate::database::entity::entries::{ActiveModelEx, ActiveModelExStoreExt};
+use crate::database::entity::entries::{ActiveModelExStoreExt};
 use crate::database::entity::piece::{ActiveModelExStoreExt as OtherActiveModelExStoreExt, Entity};
 use crate::database::entity::prelude::*;
+use crate::store_lenses::{ActiveHasManyStoreImplExt, ActiveHasOneStoreImplExt};
 use dioxus::prelude::*;
-use sea_orm::{ActiveHasMany, ActiveHasManyStoreExt, ActiveHasManyStoreTransposed, ActiveHasOneStoreExt, DatabaseConnection, EntityTrait};
+use sea_orm::{DatabaseConnection, EntityTrait, Set};
 
 #[component]
 pub fn Piece0TextEditor(mut piece: Store<piece::ActiveModelEx>) -> Element {
     // 1. Get the store for the HasOne field (assuming the macro generates `piece_0_text()`)
-    let mut has_one_store = piece.piece_0_text();
-
-    // 2. Unwrap it to Option<Store<piece_0_text::ActiveModelEx>>
-    let mut child_text_store = has_one_store.set().and_then(|opt| opt.transpose());
+    let child_text_store = piece.piece_0_text().model();
 
     rsx! {
         textarea {
             class: "form-control",
             oninput: move |e| {
                 let val = e.value();
-                // 3. Write ONLY to the child store!
-                // This prevents the parent `PieceEditor` from re-rendering on every keystroke.
-                if let Some(mut store) = child_text_store {
-                    store.write().content = sea_orm::ActiveValue::Set(val);
-                }
+                child_text_store.unwrap().write().content = Set(val);
             }
         }
     }
@@ -44,13 +38,6 @@ pub fn PieceEditor(mut piece: Store<piece::ActiveModelEx>) -> Element {
     }
 }
 
-#[store]
-impl<Lens, E: EntityTrait> Store<ActiveHasMany<E>, Lens> {
-    fn iter_children(&mut self) {
-        // TODO
-    }
-}
-
 #[component]
 pub fn NewEntry() -> Element {
     let db_signal = use_context::<Resource<DatabaseConnection>>();
@@ -62,12 +49,6 @@ pub fn NewEntry() -> Element {
     // MAIN STORE
     let mut entry = use_store(entries::ActiveModel::builder);
     let mut p = entry.pieces();
-
-    let many_iter = p
-        .replace()
-        .or_else(|| p.append())
-        .into_iter()
-        .flat_map(|vec_store| vec_store.iter().collect::<Vec<_>>());
 
     use_effect(move || {
         if let Some(journals) = journals()
@@ -99,7 +80,7 @@ pub fn NewEntry() -> Element {
                 }
             }
         }
-        for piece in many_iter {
+        for piece in entry.pieces().model() {
             PieceEditor {piece:piece}
         }
         button {

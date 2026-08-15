@@ -2,7 +2,6 @@ use crate::Route;
 use crate::components::icon::Icon;
 use dioxus::prelude::*;
 
-
 #[component]
 pub fn NavItem(to: Route, icon: String) -> Element {
     rsx! {

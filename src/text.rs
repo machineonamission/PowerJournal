@@ -45,4 +45,3 @@ pub fn sanitize_html(html: &str) -> Result<String> {
 
     Ok(clean_html)
 }
-

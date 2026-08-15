@@ -354,7 +354,8 @@ pub async fn import_apple_journal(mut args: ImporterArgs<'_>) -> Result<()> {
             master_entry = master_entry.add_piece(
                 piece::ActiveModel::builder()
                     .set_piece_0_text(
-                        piece_0_text::ActiveModel::builder().set_content(sanitize_apple_html(&body_contents)?),
+                        piece_0_text::ActiveModel::builder()
+                            .set_content(sanitize_apple_html(&body_contents)?),
                     )
                     .set_piece_type(0),
             );
@@ -507,9 +508,7 @@ pub async fn import_apple_journal(mut args: ImporterArgs<'_>) -> Result<()> {
         for i in 0..spawned {
             if let Some(result) = rx.recv().await {
                 let (normalized, inserted_id) = result?; // bubbles up errors
-                log(format!(
-                    "Finalizing DB insert for asset {i}/{spawned}..."
-                ));
+                log(format!("Finalizing DB insert for asset {i}/{spawned}..."));
                 insert_blob(&txn, inserted_id, normalized).await?;
             }
         }
@@ -527,4 +526,3 @@ pub async fn import_apple_journal(mut args: ImporterArgs<'_>) -> Result<()> {
 //         .await
 //         .unwrap()
 // }
-

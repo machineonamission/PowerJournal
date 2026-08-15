@@ -25,7 +25,7 @@ pub struct Importer {
 
 // #[component]
 // pub fn Importer(name: &'static str, function: ImportFn, children: Element) -> Element {
-//     
+//
 // }
 
 /// The Home page component that will be rendered when the current route is `[Route::Home]`
@@ -126,7 +126,6 @@ pub fn ImportersView() -> Element {
 
     let db_signal = use_context::<Resource<DatabaseConnection>>();
 
-
     // this looks stupid, but only updating the renderer "every so often" instead of EVERY UPDATE
     // saves TONS of ui processing and lets me spam logs how i want
     let mut log_render = use_signal(Vec::<String>::new);
@@ -161,7 +160,7 @@ pub fn ImportersView() -> Element {
                 }
             "#,
             )
-                .await;
+            .await;
         });
     });
 
