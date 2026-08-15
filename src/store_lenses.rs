@@ -3,7 +3,7 @@
 //! TODO: either via AI or by hand, i need to refactor this god-awful, though functioning, file
 
 use dioxus::prelude::*;
-use sea_orm::{ActiveHasMany, ActiveHasOne, ActiveHasOneStoreExt, EntityTrait};
+use sea_orm::{ActiveHasMany, ActiveHasOne, ActiveHasOneStoreExt, ActiveModelTrait, EntityTrait};
 
 #[store(pub)]
 impl<Lens, E: EntityTrait + 'static> Store<ActiveHasMany<E>, Lens>
@@ -60,5 +60,20 @@ where
                 .map_writer(|lens| lens.boxed_mut())
                 .into(),
         )
+    }
+
+    /// Auto-vivify: Return the related model, automatically initializing it
+    /// to its Default state if it does not currently exist.
+    fn model_or_default(self) -> Store<E::ActiveModelEx> {
+        // Rebind `self` to be mutable inside the function body!
+        let mut store = self;
+
+        // If the relation doesn't exist yet, mutate the parent store to create it!
+        if matches!(&*store.peek(), ActiveHasOne::NotSet | ActiveHasOne::Set(None)) {
+            *store.write() = ActiveHasOne::Set(Some(Box::new(E::ActiveModelEx::default())));
+        }
+
+        // Now we absolutely guarantee it exists, so we can unwrap safely.
+        store.model().expect("model_or_default failed to auto-initialize")
     }
 }

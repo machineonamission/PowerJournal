@@ -1,6 +1,6 @@
 use crate::Route;
 use crate::components::icon::Icon;
-use crate::database::entity::entries::{ActiveModelExStoreExt};
+use crate::database::entity::entries::ActiveModelExStoreExt;
 use crate::database::entity::piece::{ActiveModelExStoreExt as OtherActiveModelExStoreExt, Entity};
 use crate::database::entity::prelude::*;
 use crate::store_lenses::{ActiveHasManyStoreImplExt, ActiveHasOneStoreImplExt};
@@ -10,14 +10,14 @@ use sea_orm::{DatabaseConnection, EntityTrait, Set};
 #[component]
 pub fn Piece0TextEditor(mut piece: Store<piece::ActiveModelEx>) -> Element {
     // 1. Get the store for the HasOne field (assuming the macro generates `piece_0_text()`)
-    let child_text_store = piece.piece_0_text().model();
+    let mut child_text_store = piece.piece_0_text().model_or_default();
 
     rsx! {
         textarea {
             class: "form-control",
             oninput: move |e| {
                 let val = e.value();
-                child_text_store.unwrap().write().content = Set(val);
+                child_text_store.write().content = Set(val);
             }
         }
     }
@@ -86,9 +86,7 @@ pub fn NewEntry() -> Element {
             r#type: "button",
             class: "btn btn-success",
             onclick: move |_| async move {
-                p.write().append(piece::ActiveModel::builder().set_piece_type(0)
-                    .set_piece_0_text(piece_0_text::ActiveModel::builder())
-                );
+                p.write().append(piece::ActiveModel::builder().set_piece_type(0));
             },
             Icon { "add" }
             "Add Piece"
