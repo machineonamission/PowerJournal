@@ -22,7 +22,9 @@ pub fn Icon(
 #[component]
 pub fn IconSheet() -> Element {
     rsx! {
-        {embed_google_font!("https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200")}
+        {
+            embed_google_font!("https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200")
+        }
         style {
             r#"
                 .material-symbols-rounded {{

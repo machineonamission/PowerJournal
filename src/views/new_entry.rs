@@ -25,9 +25,8 @@ pub fn Piece0TextEditor(mut piece: Store<piece::ActiveModelEx>) -> Element {
 
 #[component]
 pub fn PieceEditor(mut piece: Store<piece::ActiveModelEx>) -> Element {
-    let piece_type = piece.read().piece_type.clone().unwrap(); // ActiveValue<i64> -> i64
     rsx! {
-        match piece_type {
+        match piece().piece_type.unwrap() {
             0 => rsx! { Piece0TextEditor { piece: piece} },
             // 1 => rsx! { Piece1MoodEditor { piece } },
             // 2 => rsx! { Piece2BlobEditor { piece } },
@@ -87,7 +86,9 @@ pub fn NewEntry() -> Element {
             r#type: "button",
             class: "btn btn-success",
             onclick: move |_| async move {
-                p.write().append(piece::ActiveModel::builder().set_piece_type(0).set_piece_0_text(piece_0_text::ActiveModel::builder()));
+                p.write().append(piece::ActiveModel::builder().set_piece_type(0)
+                    .set_piece_0_text(piece_0_text::ActiveModel::builder())
+                );
             },
             Icon { "add" }
             "Add Piece"
@@ -98,10 +99,7 @@ pub fn NewEntry() -> Element {
             class: "btn btn-success",
             onclick: move |_| async move {
                 dbg!(&entry());
-                let journal_id = match entry().journal_id {
-                    sea_orm::ActiveValue::Set(id) => id,
-                    _ => 0,
-                };
+                let journal_id = entry().journal_id.unwrap();
                 entry.set(entry().set_datetime(chrono::Utc::now().timestamp()));
                 entry().insert(&db_signal().unwrap()).await.expect("TODO: panic message");
                 navigator.push(Route::JournalPaginate { id: journal_id });
