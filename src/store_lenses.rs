@@ -1,4 +1,6 @@
 //! Dioxus Store lenses for SeaORM nested active relations.
+//! although the concept is my own, this file was heavily AI-assisted.
+//! TODO: either via AI or by hand, i need to refactor this god-awful, though functioning, file
 
 use dioxus::prelude::*;
 use sea_orm::{ActiveHasMany, ActiveHasOne, ActiveHasOneStoreExt, EntityTrait};
