@@ -30,6 +30,7 @@ pub fn Piece0TextEditor(mut piece: Store<piece::ActiveModelEx>) -> Element {
         }
     }
 }
+
 #[component]
 pub fn Piece1MoodEditor(mut piece: Store<piece::ActiveModelEx>) -> Element {
     let mut store = piece.piece_1_mood().model_or_default();
@@ -49,7 +50,6 @@ pub fn Piece1MoodEditor(mut piece: Store<piece::ActiveModelEx>) -> Element {
     }
 }
 
-
 #[component]
 pub fn Piece2BlobEditor(mut piece: Store<piece::ActiveModelEx>) -> Element {
     let mut store = piece.piece_2_blob().model_or_default();
@@ -58,6 +58,7 @@ pub fn Piece2BlobEditor(mut piece: Store<piece::ActiveModelEx>) -> Element {
         "TODO"
     }
 }
+
 #[component]
 pub fn Piece3LocationEditor(mut piece: Store<piece::ActiveModelEx>) -> Element {
     let mut store = piece.piece_3_location().model_or_default();
@@ -66,6 +67,7 @@ pub fn Piece3LocationEditor(mut piece: Store<piece::ActiveModelEx>) -> Element {
         "TODO"
     }
 }
+
 #[component]
 pub fn Piece4ActivityEditor(mut piece: Store<piece::ActiveModelEx>) -> Element {
     let mut store = piece.piece_4_activity().model();
