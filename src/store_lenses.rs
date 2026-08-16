@@ -69,11 +69,16 @@ where
         let mut store = self;
 
         // If the relation doesn't exist yet, mutate the parent store to create it!
-        if matches!(&*store.peek(), ActiveHasOne::NotSet | ActiveHasOne::Set(None)) {
+        if matches!(
+            &*store.peek(),
+            ActiveHasOne::NotSet | ActiveHasOne::Set(None)
+        ) {
             *store.write() = ActiveHasOne::Set(Some(Box::new(E::ActiveModelEx::default())));
         }
 
         // Now we absolutely guarantee it exists, so we can unwrap safely.
-        store.model().expect("model_or_default failed to auto-initialize")
+        store
+            .model()
+            .expect("model_or_default failed to auto-initialize")
     }
 }
