@@ -1,8 +1,8 @@
 pub mod piece_0_text;
-mod piece_1_mood;
-mod piece_2_blob;
-mod piece_3_location;
-mod piece_4_activities;
+pub mod piece_1_mood;
+pub mod piece_2_blob;
+pub mod piece_3_location;
+pub mod piece_4_activities;
 
 use crate::Route;
 use crate::components::pieces::piece_0_text::Piece0Text;

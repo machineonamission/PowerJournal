@@ -6,90 +6,7 @@ use crate::database::entity::prelude::*;
 use crate::store_lenses::{ActiveHasManyStoreImplExt, ActiveHasOneStoreImplExt};
 use dioxus::prelude::*;
 use sea_orm::{DatabaseConnection, EntityTrait, Set};
-
-#[component]
-pub fn Piece0TextEditor(mut piece: Store<piece::ActiveModelEx>) -> Element {
-    // 1. Get the store for the HasOne field (assuming the macro generates `piece_0_text()`)
-    let mut store = piece.piece_0_text().model_or_default();
-
-    rsx! {
-        input {
-            type: "text",
-            class: "form-control",
-            oninput: move |e| {
-                let val = e.value();
-                store.write().title = Set(Some(val));
-            }
-        }
-        textarea {
-            class: "form-control",
-            oninput: move |e| {
-                let val = e.value();
-                store.write().content = Set(val);
-            }
-        }
-    }
-}
-
-#[component]
-pub fn Piece1MoodEditor(mut piece: Store<piece::ActiveModelEx>) -> Element {
-    let mut store = piece.piece_1_mood().model_or_default();
-
-    rsx! {
-        input {
-            type: "range",
-            class: "form-range",
-            min: -1,
-            max: 1,
-            step: 0.0001,
-            oninput: move |e| {
-                let val = e.value();
-                store.write().pleasantness = Set(val.parse::<f64>().unwrap_or_default());
-            }
-        }
-    }
-}
-
-#[component]
-pub fn Piece2BlobEditor(mut piece: Store<piece::ActiveModelEx>) -> Element {
-    let mut store = piece.piece_2_blob().model_or_default();
-
-    rsx! {
-        "TODO"
-    }
-}
-
-#[component]
-pub fn Piece3LocationEditor(mut piece: Store<piece::ActiveModelEx>) -> Element {
-    let mut store = piece.piece_3_location().model_or_default();
-
-    rsx! {
-        "TODO"
-    }
-}
-
-#[component]
-pub fn Piece4ActivityEditor(mut piece: Store<piece::ActiveModelEx>) -> Element {
-    let mut store = piece.piece_4_activity().model();
-
-    rsx! {
-        "TODO"
-    }
-}
-
-#[component]
-pub fn PieceEditor(mut piece: Store<piece::ActiveModelEx>) -> Element {
-    rsx! {
-        match piece().piece_type.unwrap() {
-            0 => rsx! { Piece0TextEditor { piece: piece} },
-            1 => rsx! { Piece1MoodEditor {piece:  piece } },
-            2 => rsx! { Piece2BlobEditor {piece:  piece } },
-            3 => rsx! { Piece3LocationEditor { piece: piece } },
-            4 => rsx! { Piece4ActivityEditor {piece:  piece } },
-            _ => rsx! {},
-        }
-    }
-}
+use crate::components::editor::PieceEditor;
 
 #[component]
 pub fn NewEntry() -> Element {
@@ -100,6 +17,7 @@ pub fn NewEntry() -> Element {
         journal::Entity::load().all(&db).await.unwrap_or_default()
     });
     // MAIN STORE
+    // TODO entry "editor" will load activemodelex from db
     let mut entry = use_store(entries::ActiveModel::builder);
     let mut p = entry.pieces();
 
