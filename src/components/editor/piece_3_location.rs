@@ -12,8 +12,7 @@ pub fn Piece3LocationEditor(mut piece: Store<piece::ActiveModelEx>) -> Element {
 
     // A signal to store the user's selected coordinates
     // let mut selected_pos = use_signal(|| None::<MapPosition>);
-    store.lat();
-
+    // TODO somehow this doesnt render? some js error?
     rsx! {
         Map {
             initial_position: MapPosition::new(51.505, -0.09, 5.0),
@@ -21,7 +20,7 @@ pub fn Piece3LocationEditor(mut piece: Store<piece::ActiveModelEx>) -> Element {
             width: "100%",
             on_click: move |position: LatLng| {
                 store.lat().set(Set(position.lat));
-                store.lat().set(Set(position.lng));
+                store.lon().set(Set(position.lng));
             },
             if let Set(lat) = store.lat()() && let Set(lng) = store.lon()() {
                 Marker {
