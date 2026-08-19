@@ -11,6 +11,7 @@ pub fn Piece0TextEditor(mut piece: Store<piece::ActiveModelEx>) -> Element {
     let mut store = piece.piece_0_text().model_or_default();
     // store.title().write().set_if_unset_default();
     store.content().write().set_if_unset_default();
+    store.title().write().set_if_unset_default();
 
     rsx! {
         input {
