@@ -10,9 +10,9 @@ use sea_orm::entity::prelude::*;
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel)]
 #[sea_orm(table_name = "piece_4_activities")]
 pub struct Model {
-    #[sea_orm(primary_key, auto_increment = false)]
+    #[sea_orm(primary_key)]
     pub id: i64,
-    #[sea_orm(primary_key, auto_increment = false)]
+    pub piece_id: i64,
     pub activity_id: i64,
     // sqlite doesnt distinguish between int and bool, and i might want to add int support in the future, so int is fine
     pub value: i64,
@@ -26,7 +26,7 @@ pub struct Model {
     pub activities: HasOne<super::activities::Entity>,
     #[sea_orm(
         belongs_to,
-        from = "id",
+        from = "piece_id",
         to = "id",
         on_update = "NoAction",
         on_delete = "Cascade"

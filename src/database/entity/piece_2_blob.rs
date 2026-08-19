@@ -7,15 +7,17 @@ use sea_orm::entity::prelude::*;
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel)]
 #[sea_orm(table_name = "piece_2_blob")]
 pub struct Model {
-    #[sea_orm(primary_key, auto_increment = false)]
+    #[sea_orm(primary_key)]
     pub id: i64,
+    pub piece_id: i64,
+    
     pub mime_type: String,
     // ACTUAL DATA IS STORED IN BLOBS TABLE!
     #[sea_orm(has_one)]
     pub blob: HasOne<super::blobs::Entity>,
     #[sea_orm(
         belongs_to,
-        from = "id",
+        from = "piece_id",
         to = "id",
         on_update = "NoAction",
         on_delete = "Cascade"

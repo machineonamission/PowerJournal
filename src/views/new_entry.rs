@@ -6,7 +6,7 @@ use crate::database::entity::prelude::*;
 use crate::route::Route;
 use crate::store_lenses::{ActiveHasManyStoreImplExt, ActiveHasOneStoreImplExt};
 use dioxus::prelude::*;
-use sea_orm::{DatabaseConnection, EntityLoaderTrait, EntityTrait, IntoActiveModel, Set};
+use sea_orm::{ActiveModelTrait, DatabaseConnection, EntityLoaderTrait, EntityTrait, IntoActiveModel, Set};
 
 #[component]
 pub fn Editor(id: Option<i64>) -> Element {
@@ -113,10 +113,13 @@ fn InnerEditor(initial_entry: entries::ActiveModelEx) -> Element {
             r#type: "button",
             class: "btn btn-success",
             onclick: move |_| async move {
-                dbg!(&entry());
                 let journal_id = entry().journal_id.unwrap();
                 entry.set(entry().set_datetime(chrono::Utc::now().timestamp()));
-                entry().insert(&db_signal().unwrap()).await.expect("TODO: panic message");
+                dbg!(&entry());
+                // the built-in save gets a little confused by the piece ID polymorphism thing
+                // using the primary as a foreign
+                // so just reimplement
+                entry().save(&db_signal().unwrap()).await.unwrap();
                 navigator.push(Route::JournalPaginate { id: Some(journal_id) });
             },
             Icon { "add" }

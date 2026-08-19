@@ -7,13 +7,14 @@ use sea_orm::entity::prelude::*;
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel)]
 #[sea_orm(table_name = "piece_0_text")]
 pub struct Model {
-    #[sea_orm(primary_key, auto_increment = false)]
+    #[sea_orm(primary_key)]
     pub id: i64,
+    pub piece_id: i64,
     pub title: Option<String>,
     pub content: String,
     #[sea_orm(
         belongs_to,
-        from = "id",
+        from = "piece_id",
         to = "id",
         on_update = "NoAction",
         on_delete = "Cascade"

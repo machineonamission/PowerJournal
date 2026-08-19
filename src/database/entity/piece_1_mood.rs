@@ -7,14 +7,16 @@ use sea_orm::entity::prelude::*;
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel)]
 #[sea_orm(table_name = "piece_1_mood")]
 pub struct Model {
-    #[sea_orm(primary_key, auto_increment = false)]
+    #[sea_orm(primary_key)]
     pub id: i64,
+    pub piece_id: i64,
+    
     //  integers are fucky, and 30 bits per entry doesnt matter. f64: -1 to 1, just like apple
     pub pleasantness: f64,
     pub energy: Option<f64>,
     #[sea_orm(
         belongs_to,
-        from = "id",
+        from = "piece_id",
         to = "id",
         on_update = "NoAction",
         on_delete = "Cascade"
