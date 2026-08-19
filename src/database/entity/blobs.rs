@@ -5,13 +5,17 @@ use sea_orm::entity::prelude::*;
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel)]
 #[sea_orm(table_name = "blobs")]
 pub struct Model {
-    #[sea_orm(primary_key, auto_increment = false)]
+    // internal basically never used ID
+    #[sea_orm(primary_key)]
     pub id: i64,
+    // parent meta ID, we will query via this
+    #[sea_orm(indexed)]
+    pub p2_id: i64,
     #[sea_orm(column_type = "Blob")]
     pub data: Vec<u8>,
     #[sea_orm(
         belongs_to,
-        from = "id",
+        from = "p2_id",
         to = "id",
         on_update = "NoAction",
         on_delete = "Cascade"
