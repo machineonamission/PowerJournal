@@ -1,6 +1,6 @@
-use crate::Route;
 use crate::components::pieces::Piece;
 use crate::database::entity::prelude::*;
+use crate::route::Route;
 use chrono::{DateTime, Utc};
 use dioxus::prelude::*;
 
@@ -15,6 +15,10 @@ pub fn Entry(entry: entries::ModelEx) -> Element {
                 h2 { "{title}" }
             }
             p { "{dt}" }
+            Link {
+                to: Route::Editor { id: Some(entry.id) },
+                "EDIT!!"
+            }
             div {
                 for piece in entry.pieces {
                     Piece { piece }

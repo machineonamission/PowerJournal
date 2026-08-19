@@ -1,5 +1,5 @@
-use crate::Route;
 use crate::components::icon::Icon;
+use crate::route::Route;
 use dioxus::prelude::*;
 
 #[component]
@@ -28,7 +28,7 @@ pub fn Navbar() -> Element {
             right: 0,
 
             NavItem {
-                to: Route::JournalPaginateAll {},
+                to: Route::JournalPaginate { id: None },
                 icon: "home",
             }
             NavItem {
@@ -36,7 +36,7 @@ pub fn Navbar() -> Element {
                 icon: "newsstand",
             }
             NavItem {
-                to: Route::NewEntry {},
+                to: Route::Editor {id:None},
                 icon: "add",
             }
             NavItem {

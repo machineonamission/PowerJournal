@@ -9,7 +9,7 @@ use dioxus::document::Style;
 use dioxus::prelude::*;
 use dioxus_google_font_embedder::{asset_url, embed_google_font};
 use sea_orm::DatabaseConnection;
-use views::*;
+use crate::route::Route;
 
 pub mod blob_asset;
 pub mod blob_utils;
@@ -19,26 +19,7 @@ mod importers;
 mod store_lenses;
 pub mod text;
 mod views;
-
-#[derive(Debug, Clone, Routable, PartialEq)]
-#[rustfmt::skip]
-enum Route {
-    #[layout(Navbar)]
-        #[route("/")]
-        JournalPaginateAll {},
-        #[route("/debug")]
-        DebugMenu {},
-        #[route("/import")]
-        ImportersView {},
-        #[route("/journal/:id")]
-        JournalPaginate { id: i64 },
-        #[route("/journals")]
-        JournalList {},
-        #[route("/new")]
-        NewEntry {},
-        #[route("/settings")]
-        Settings {},
-}
+mod route;
 
 const FAVICON: Asset = asset!("/assets/logo/logo.svg");
 

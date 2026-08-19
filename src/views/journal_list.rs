@@ -1,10 +1,10 @@
-use crate::Route;
 use crate::components::journal_list::JournalListEntry;
 use crate::components::paginate::Paginate;
 use crate::database::entity::{
     entries, journal, piece, piece_0_text, piece_1_mood, piece_2_blob, piece_3_location,
     piece_4_activities,
 };
+use crate::route::Route;
 use dioxus::prelude::*;
 use sea_orm::QueryOrder;
 

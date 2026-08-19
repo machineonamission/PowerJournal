@@ -1,4 +1,4 @@
-use crate::Route;
+use crate::route::Route;
 use dioxus::prelude::*;
 use sea_orm::DatabaseConnection;
 use std::path::PathBuf;
@@ -31,11 +31,11 @@ pub fn DebugMenu() -> Element {
             flex_direction: "column",
             gap: "1rem",
             Link {
-                to: Route::JournalPaginate { id: 1 },
+                to: Route::JournalPaginate { id: Some(1) },
                 "open journal 1"
             }
             Link {
-                to: Route::JournalPaginateAll {},
+                to: Route::JournalPaginate { id:None},
                 "open all journals"
             }
             Link {
